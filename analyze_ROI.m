@@ -21,7 +21,7 @@ function [props, coords] = analyze_ROI(ROIs, varargin)
   end
 
   nROIs = length(ROIs);
-  props_indx = cumsum(do_props .* [1 1 1 4 2])
+  props_indx = cumsum(do_props .* [1 1 1 4 2]);
   props = NaN(nROIs, props_indx(end));
   coords = cell(nROIs, 1);
 
