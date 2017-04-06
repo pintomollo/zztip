@@ -2,6 +2,7 @@ function [props, coords] = analyze_ROI(ROIs, varargin)
 % Slice Area Perimeter Centroid BoundingBox
 
   do_props = false(1,5);
+  resol = 1;
 
   for i=1:nargin-1
     switch varargin{i}
@@ -16,7 +17,11 @@ function [props, coords] = analyze_ROI(ROIs, varargin)
       case 'Centroid'
         do_props(5) = true;
       otherwise
-        disp(['Unknown property ''' varargin{i} ''', skipping.']);
+        if (isnumeric(varargin{i}))
+          resol = varargin{i};
+        else
+          disp(['Unknown property ''' varargin{i} ''', skipping.']);
+        end
     end
   end
 
@@ -27,7 +32,11 @@ function [props, coords] = analyze_ROI(ROIs, varargin)
 
   for i=1:nROIs
     type = ROIs{i}.strType;
-    pos = ROIs{i}.mnCoordinates;
+    if (strncmp(type, 'Line', 4))
+      pos = ROIs{i}.vnLinePoints([1 2; 3 4]) * resol;
+    else
+      pos = ROIs{i}.mnCoordinates * resol;
+    end
 
     if (do_props(1))
       props(i, 1) = ROIs{i}.nPosition;
