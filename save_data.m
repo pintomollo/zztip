@@ -35,7 +35,8 @@ function [new_stack] = save_data(fname, data, varargin)
   is_sparse = issparse(img);
 
   [h,w,c] = size(img);
-  split_rgb = (split_rgb && mod(c, 3)==0);
+  is_rgb = (mod(c, 3)==0);
+  split_rgb = (split_rgb && is_rgb);
 
   if (isempty(type))
     type = class(img);
@@ -66,7 +67,7 @@ function [new_stack] = save_data(fname, data, varargin)
                        'ImageWidth', w, ...
                        'Photometric', Tiff.Photometric.MinIsBlack, ...
                        'BitsPerSample', 8, ...
-                       'SamplesPerPixel', 1, ...
+                       'SamplesPerPixel', 1 + 2*(~split_rgb && is_rgb), ...
                        'RowsPerStrip', h, ...
                        'SampleFormat', byte, ...
                        'Compression', Tiff.Compression.None, ...
@@ -117,24 +118,41 @@ function [new_stack] = save_data(fname, data, varargin)
   is_new = is_new(ones(1,ncolors));
   ndata = length(data);
   for i=1:ndata
-    for n=1:c
-
-      indx = mod(n, ncolors) + 1;
-
-      if (~is_new(indx))
-        tiffobj(indx).writeDirectory();
+    if (~split_rgb && is_rgb)
+      if (~is_new)
+        tiffobj.writeDirectory();
       else
-        tiffobj(indx) = Tiff(files{indx}, 'w8');
-        is_new(indx) = false;
+        tiffobj = Tiff(files{1}, 'w8');
+        is_new = false;
       end
-      tiffobj(indx).setTag(tagstruct);
+      tiffobj.setTag(tagstruct);
 
       if (is_sparse)
-        [cast_img, scaling_params] = scaled_cast(full(img(:,:,n)), scaling_params, type);
+        [cast_img, scaling_params] = scaled_cast(full(img), scaling_params, type);
       else
-        [cast_img, scaling_params] = scaled_cast(img(:,:,n), scaling_params, type);
+        [cast_img, scaling_params] = scaled_cast(img, scaling_params, type);
       end
-      tiffobj(indx).write(cast_img);
+      tiffobj.write(cast_img);
+    else
+      for n=1:c
+
+        indx = mod(n, ncolors) + 1;
+
+        if (~is_new(indx))
+          tiffobj(indx).writeDirectory();
+        else
+          tiffobj(indx) = Tiff(files{indx}, 'w8');
+          is_new(indx) = false;
+        end
+        tiffobj(indx).setTag(tagstruct);
+
+        if (is_sparse)
+          [cast_img, scaling_params] = scaled_cast(full(img(:,:,n)), scaling_params, type);
+        else
+          [cast_img, scaling_params] = scaled_cast(img(:,:,n), scaling_params, type);
+        end
+        tiffobj(indx).write(cast_img);
+      end
     end
 
     if (i~=ndata)
