@@ -37,6 +37,7 @@ function export_ROI(fname, ROIs, imgs, group, dpi)
   for i=1:nmax
     if (~exist(fullfile(fpath, [fname num2str(i) fext]), 'file'))
       count = i;
+      break;
     end
   end
 
@@ -56,6 +57,12 @@ function export_ROI(fname, ROIs, imgs, group, dpi)
   end
 
   is_rgb = (ndims(imgs)>3);
+  fsize = get( 0, 'Screensize' );
+  fsize = [fsize(1) 0 fsize(4)*8.27/11.7 fsize(4)];
+  fsize(1) = (fsize(1)-fsize(3))/2;
+  fsize = ceil(fsize);
+
+  colors = [0.5 0.5 0.5; 1 0.5 0.5; brewermap(max(length(ROIs), 1), 'Spectral')];
 
   if (group)
 
@@ -67,7 +74,7 @@ function export_ROI(fname, ROIs, imgs, group, dpi)
       nj = ceil(nimgs/ni);
     end
 
-    hf = figure;
+    hf = figure('position', fsize);
     for i=1:nimgs
       ci = rem(i-1, ni) + 1;
       cj = ceil(i/ni);
@@ -80,25 +87,26 @@ function export_ROI(fname, ROIs, imgs, group, dpi)
         img = imgs(:,:,i);
       end
       image(img, 'Parent', ha);
-      set(ha, 'Visible', 'off', 'NextPlot', 'add');
+      set(ha, 'Visible', 'off', 'NextPlot', 'add', 'LooseInset', get(ha,'TightInset'));
       axis(ha, 'image');
 
+      c = 1;
       for j=1:length(ROIs)
         if (ROIs{j}.nPosition == i)
           switch ROIs{i}.strType
             case 'PolyLine'
-              plot(ha, ROIs{j}.mnCoordinates(:,1), ROIs{j}.mnCoordinates(:,2));
+              plot(ha, ROIs{j}.mnCoordinates(:,1), ROIs{j}.mnCoordinates(:,2), 'Color', colors(c,:));
             case 'Polygon'
-              plot(ha, ROIs{j}.mnCoordinates([1:end 1],1), ROIs{j}.mnCoordinates([1:end 1],2));
+              plot(ha, ROIs{j}.mnCoordinates([1:end 1],1), ROIs{j}.mnCoordinates([1:end 1],2), 'Color', colors(c,:));
           end
+          c = c + 1;
         end
       end
     end
 
-    %saveas(hf, fullfile(fpath, [fname num2str(i+count-1) fext]));
-    print(hf, ['-d' fext(2:end)], ['-r' num2str(dpi)], '-noui', fullfile(fpath, [fname num2str(count) fext]));
+    print(hf, ['-d' fext(2:end)], ['-r' num2str(dpi)], '-noui', '-bestfit', fullfile(fpath, [fname num2str(count) fext]));
   else
-    hf = figure;
+    hf = figure('position', fsize);
     ha = axes('Parent', hf, 'Visible', 'off');
     hi = -1;
     hl = [];
@@ -121,19 +129,20 @@ function export_ROI(fname, ROIs, imgs, group, dpi)
         hl = [];
       end
 
+      c = 1;
       for j=1:length(ROIs)
         if (ROIs{j}.nPosition == i)
           switch ROIs{i}.strType
             case 'PolyLine'
-              hl(end+1) = plot(ha, ROIs{j}.mnCoordinates(:,1), ROIs{j}.mnCoordinates(:,2));
+              hl(end+1) = plot(ha, ROIs{j}.mnCoordinates(:,1), ROIs{j}.mnCoordinates(:,2), 'Color', colors(c,:));
             case 'Polygon'
-              hl(end+1) = plot(ha, ROIs{j}.mnCoordinates([1:end 1],1), ROIs{j}.mnCoordinates([1:end 1],2));
+              hl(end+1) = plot(ha, ROIs{j}.mnCoordinates([1:end 1],1), ROIs{j}.mnCoordinates([1:end 1],2), 'Color', colors(c,:));
           end
+          c = c + 1;
         end
       end
 
-      %saveas(hf, fullfile(fpath, [fname num2str(i+count-1) fext]));
-      print(hf, ['-d' fext(2:end)], ['-r' num2str(dpi)], '-noui', fullfile(fpath, [fname num2str(i+count-1) fext]));
+      print(hf, ['-d' fext(2:end)], ['-r' num2str(dpi)], '-noui', '-bestfit', fullfile(fpath, [fname num2str(i+count-1) fext]));
     end
   end
 

@@ -20,7 +20,9 @@ function recursive_stacks(folder)
     if (files(i).isdir && files(i).name(1)~='.')
       has_dir = true;
 
-      recursive_stacks(fullfile(folder, files(i).name));
+      if (~exist(fullfile(folder, [files(i).name '.tif']), 'file'))
+        recursive_stacks(fullfile(folder, files(i).name));
+      end
     end
   end
 
