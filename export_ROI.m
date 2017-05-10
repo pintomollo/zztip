@@ -1,4 +1,16 @@
-function export_ROI(fname, ROIs, imgs)
+function export_ROI(fname, ROIs, imgs, group, dpi)
+
+  if (nargin < 4)
+    group = true;
+    dpi = 150;
+  elseif (nargin < 5)
+    if (islogical(group))
+      dpi = 150;
+    else
+      dpi = group;
+      group = true;
+    end
+  end
 
   nmax = 1000;
 
@@ -45,40 +57,84 @@ function export_ROI(fname, ROIs, imgs)
 
   is_rgb = (ndims(imgs)>3);
 
-  hf = figure;
-  ha = axes('Parent', hf, 'Visible', 'off');
-  hi = -1;
-  hl = [];
-  for i=1:nimgs
-    if (is_rgb)
-      img = imgs(:,:,:,i);
+  if (group)
+
+    if (nimgs < 10)
+      nj = ceil(sqrt(nimgs));
+      ni = ceil(nimgs/nj);
     else
-      img = imgs(:,:,i);
+      ni = 5;
+      nj = ceil(nimgs/ni);
     end
-    if (hi < 0)
-      hi = image(img, 'Parent', ha);
+
+    hf = figure;
+    for i=1:nimgs
+      ci = rem(i-1, ni) + 1;
+      cj = ceil(i/ni);
+
+      ha = subplot(ni, nj, cj + (ci-1)*nj, 'Parent', hf, 'Visible', 'off');
+
+      if (is_rgb)
+        img = imgs(:,:,:,i);
+      else
+        img = imgs(:,:,i);
+      end
+      image(img, 'Parent', ha);
       set(ha, 'Visible', 'off', 'NextPlot', 'add');
-    else
-      set(hi, 'CData', img);
-    end
+      axis(ha, 'image');
 
-    if (any(ishandle(hl)))
-      delete(hl)
-      hl = [];
-    end
-
-    for j=1:length(ROIs)
-      if (ROIs{j}.nPosition == i)
-        switch ROIs{i}.strType
-          case 'PolyLine'
-            hl(end+1) = plot(ha, ROIs{j}.mnCoordinates(:,1), ROIs{j}.mnCoordinates(:,2));
-          case 'Polygon'
-            hl(end+1) = plot(ha, ROIs{j}.mnCoordinates([1:end 1],1), ROIs{j}.mnCoordinates([1:end 1],2));
+      for j=1:length(ROIs)
+        if (ROIs{j}.nPosition == i)
+          switch ROIs{i}.strType
+            case 'PolyLine'
+              plot(ha, ROIs{j}.mnCoordinates(:,1), ROIs{j}.mnCoordinates(:,2));
+            case 'Polygon'
+              plot(ha, ROIs{j}.mnCoordinates([1:end 1],1), ROIs{j}.mnCoordinates([1:end 1],2));
+          end
         end
       end
     end
 
-    saveas(hf, fullfile(fpath, [fname num2str(i+count-1) fext]));
+    %saveas(hf, fullfile(fpath, [fname num2str(i+count-1) fext]));
+    print(hf, ['-d' fext(2:end)], ['-r' num2str(dpi)], '-noui', fullfile(fpath, [fname num2str(count) fext]));
+  else
+    hf = figure;
+    ha = axes('Parent', hf, 'Visible', 'off');
+    hi = -1;
+    hl = [];
+    for i=1:nimgs
+      if (is_rgb)
+        img = imgs(:,:,:,i);
+      else
+        img = imgs(:,:,i);
+      end
+      if (hi < 0)
+        hi = image(img, 'Parent', ha);
+        set(ha, 'Visible', 'off', 'NextPlot', 'add');
+        axis(ha, 'image');
+      else
+        set(hi, 'CData', img);
+      end
+
+      if (any(ishandle(hl)))
+        delete(hl)
+        hl = [];
+      end
+
+      for j=1:length(ROIs)
+        if (ROIs{j}.nPosition == i)
+          switch ROIs{i}.strType
+            case 'PolyLine'
+              hl(end+1) = plot(ha, ROIs{j}.mnCoordinates(:,1), ROIs{j}.mnCoordinates(:,2));
+            case 'Polygon'
+              hl(end+1) = plot(ha, ROIs{j}.mnCoordinates([1:end 1],1), ROIs{j}.mnCoordinates([1:end 1],2));
+          end
+        end
+      end
+
+      %saveas(hf, fullfile(fpath, [fname num2str(i+count-1) fext]));
+      print(hf, ['-d' fext(2:end)], ['-r' num2str(dpi)], '-noui', fullfile(fpath, [fname num2str(i+count-1) fext]));
+    end
   end
 
   delete(hf);
