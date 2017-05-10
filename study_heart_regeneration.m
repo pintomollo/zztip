@@ -1,11 +1,15 @@
-function [ratios] = study_heart_regeneration
+function [ratios, files] = study_heart_regeneration(do_export)
+
+  if (nargin == 0)
+    do_export = false;
+  end
 
   files = find_segmentations('/Users/blanchou/Documents/SB07/Histology/modified_data/');
 
   title_name = 'SB07';
 
-  ratios = NaN(length(files), 1);
-  dpci = ratios;
+  ratios = NaN(length(files), 2);
+  dpci = NaN(length(files), 1);
 
   hits = regexp(files, '.*SB\d+_\w(\d+)dpci_.*', 'tokens');
 
@@ -14,29 +18,53 @@ function [ratios] = study_heart_regeneration
 
     [tmp, prefix1, junk] = fileparts(fname);
     [tmp, prefix2, junk] = fileparts(tmp);
-    prefix = [prefix2 '_' prefix1 '_'];
+    prefix = [prefix2 '_' prefix1];
 
     data = [fname '.zip'];
     imgs = [fname '.tif'];
 
     ROIs = ReadImageJROI(data);
     props = analyze_ROI(ROIs, 'Slice', 'Area');
-    props = sortrows(props);
+    [props, indxs] = sortrows(props, [1 -2]);
+    ROIs = ROIs(indxs);
 
-    is_injury = ([diff(props(:,1)); 1] == 0);
-    heart = sum(props(~is_injury, 2));
-    injury = sum(props(is_injury, 2));
+    is_injury = ([1; diff(props(:,1))] == 0);
+    heart = props(~is_injury, :);
+    injury = props(is_injury, :);
 
-    ratios(i) = injury/heart;
+    heart = interpolate(heart);
+    injury = interpolate(injury);
+
+    largest = sortrows(injury, -2);
+    if (size(largest, 1) > 3)
+      largest = largest(1:3,:);
+    end
+    largest = largest(:,1);
+
+    ratios(i, 1) = sum(injury(:,2))/sum(heart(:,2));
+    ratios(i, 2) = sum(injury(ismember(injury(:,1), largest),2))/sum(heart(ismember(heart(:,1), largest),2));
+
     dpci(i) = str2double(hits{i}{1});
 
-    export_ROI(prefix, ROIs, imgs);
+    if (do_export)
+      export_ROI(prefix, ROIs, imgs);
+    end
   end
+
+  ratios(:,end+1) = dpci;
+
+  display_ratios(ratios(:,1), dpci, title_name)
+  display_ratios(ratios(:,2), dpci, title_name)
+
+  return;
+end
+
+function display_ratios(ratios, dpci, title_name)
 
   [H, p] = myttest(ratios, dpci);
   ratios = ratios*100;
 
-  ids = unique(dpci);
+  ids = unique(dpci(:));
   groups = {};
   pvals = [];
   for i = 1:length(ids)-1
@@ -61,6 +89,21 @@ function [ratios] = study_heart_regeneration
   xlabel('dpci')
 
   title(title_name);
+
+  return;
+end
+
+function [new] = interpolate(old)
+
+  pts = unique(old(:,1));
+  pos = [min(pts):max(pts)].';
+
+  if (numel(pts)==numel(pos))
+    new = old;
+  else
+    new = interp1(old(:,1), old(:,2), pos);
+    new = [pos new];
+  end
 
   return;
 end

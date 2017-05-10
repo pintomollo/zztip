@@ -33,18 +33,6 @@ function export_ROI(fname, ROIs, imgs, group, dpi)
     fext = '.pdf';
   end
 
-  count = -1;
-  for i=1:nmax
-    if (~exist(fullfile(fpath, [fname num2str(i) fext]), 'file'))
-      count = i;
-      break;
-    end
-  end
-
-  if (count < 0)
-    error(['Cannot overwrite ' fname ]);
-  end
-
   if (ischar(imgs))
     nimgs = size_data(imgs);
     imgs = load_data(imgs, [1:nimgs]);
@@ -95,17 +83,34 @@ function export_ROI(fname, ROIs, imgs, group, dpi)
         if (ROIs{j}.nPosition == i)
           switch ROIs{i}.strType
             case 'PolyLine'
-              plot(ha, ROIs{j}.mnCoordinates(:,1), ROIs{j}.mnCoordinates(:,2), 'Color', colors(c,:));
+              plot(ha, ROIs{j}.mnCoordinates(:,1), ROIs{j}.mnCoordinates(:,2), 'Color', colors(c,:), 'LineWidth', 2);
             case 'Polygon'
-              plot(ha, ROIs{j}.mnCoordinates([1:end 1],1), ROIs{j}.mnCoordinates([1:end 1],2), 'Color', colors(c,:));
+              plot(ha, ROIs{j}.mnCoordinates([1:end 1],1), ROIs{j}.mnCoordinates([1:end 1],2), 'Color', colors(c,:), 'LineWidth', 2);
           end
           c = c + 1;
         end
       end
     end
 
-    print(hf, ['-d' fext(2:end)], ['-r' num2str(dpi)], '-noui', '-bestfit', fullfile(fpath, [fname num2str(count) fext]));
+    %print(hf, ['-d' fext(2:end)], ['-r' num2str(dpi)], '-noui', '-bestfit', fullfile(fpath, [fname num2str(count) fext]));
+    print(hf, ['-d' fext(2:end)], ['-r' num2str(dpi)], '-noui', '-bestfit', fullfile(fpath, [fname fext]));
   else
+
+    %{
+    count = -1;
+    for i=1:nmax
+      if (~exist(fullfile(fpath, [fname num2str(i) fext]), 'file'))
+        count = i;
+        break;
+      end
+    end
+
+    if (count < 0)
+      error(['Cannot overwrite ' fname ]);
+    end
+    %}
+    count = 1;
+
     hf = figure('position', fsize);
     ha = axes('Parent', hf, 'Visible', 'off');
     hi = -1;
@@ -134,9 +139,9 @@ function export_ROI(fname, ROIs, imgs, group, dpi)
         if (ROIs{j}.nPosition == i)
           switch ROIs{i}.strType
             case 'PolyLine'
-              hl(end+1) = plot(ha, ROIs{j}.mnCoordinates(:,1), ROIs{j}.mnCoordinates(:,2), 'Color', colors(c,:));
+              hl(end+1) = plot(ha, ROIs{j}.mnCoordinates(:,1), ROIs{j}.mnCoordinates(:,2), 'Color', colors(c,:), 'LineWidth', 2);
             case 'Polygon'
-              hl(end+1) = plot(ha, ROIs{j}.mnCoordinates([1:end 1],1), ROIs{j}.mnCoordinates([1:end 1],2), 'Color', colors(c,:));
+              hl(end+1) = plot(ha, ROIs{j}.mnCoordinates([1:end 1],1), ROIs{j}.mnCoordinates([1:end 1],2), 'Color', colors(c,:), 'LineWidth', 2);
           end
           c = c + 1;
         end
