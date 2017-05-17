@@ -36,6 +36,7 @@ function export_ROI(fname, ROIs, imgs, group, dpi)
   if (ischar(imgs))
     nimgs = size_data(imgs);
     imgs = load_data(imgs, [1:nimgs]);
+    imgs = imwhitebalance(imgs, 45);
   else
     nimgs = size_data(imgs);
     nimgs = nimgs(end);
@@ -43,6 +44,8 @@ function export_ROI(fname, ROIs, imgs, group, dpi)
   if (ischar(ROIs))
     ROIs = ReadImageJROI(ROIs);
   end
+
+  flip = (size(imgs,1) > size(imgs,2));
 
   is_rgb = (ndims(imgs)>3);
   fsize = get( 0, 'Screensize' );
@@ -62,18 +65,28 @@ function export_ROI(fname, ROIs, imgs, group, dpi)
       nj = ceil(nimgs/ni);
     end
 
+    offset = 0.1;
+    fi = (1 - offset)/ni;
+    fj = 1/nj;
+
     hf = figure('position', fsize);
     for i=1:nimgs
       ci = rem(i-1, ni) + 1;
       cj = ceil(i/ni);
 
-      ha = subplot(ni, nj, cj + (ci-1)*nj, 'Parent', hf, 'Visible', 'off');
+      %ha = subplot(ni, nj, cj + (ci-1)*nj, 'Parent', hf, 'Visible', 'off');
+      ha = subplot('position', [(cj-1)*fj (ni-ci)*fi fj fi], 'Parent', hf, 'Visible', 'off');
 
       if (is_rgb)
         img = imgs(:,:,:,i);
+        %img = imwhitebalance(img, 20);
       else
         img = imgs(:,:,i);
       end
+      if (flip)
+        img = permute(img, [2 1 3]);
+      end
+
       image(img, 'Parent', ha);
       set(ha, 'Visible', 'off', 'NextPlot', 'add', 'LooseInset', get(ha,'TightInset'));
       axis(ha, 'image');
@@ -81,11 +94,19 @@ function export_ROI(fname, ROIs, imgs, group, dpi)
       c = 1;
       for j=1:length(ROIs)
         if (ROIs{j}.nPosition == i)
-          switch ROIs{i}.strType
+          switch ROIs{j}.strType
             case 'PolyLine'
-              plot(ha, ROIs{j}.mnCoordinates(:,1), ROIs{j}.mnCoordinates(:,2), 'Color', colors(c,:), 'LineWidth', 2);
+              if (flip)
+                plot(ha, ROIs{j}.mnCoordinates(:,2), ROIs{j}.mnCoordinates(:,1), 'Color', colors(c,:), 'LineWidth', 2);
+              else
+                plot(ha, ROIs{j}.mnCoordinates(:,1), ROIs{j}.mnCoordinates(:,2), 'Color', colors(c,:), 'LineWidth', 2);
+              end
             case 'Polygon'
-              plot(ha, ROIs{j}.mnCoordinates([1:end 1],1), ROIs{j}.mnCoordinates([1:end 1],2), 'Color', colors(c,:), 'LineWidth', 2);
+              if (flip)
+                plot(ha, ROIs{j}.mnCoordinates([1:end 1],2), ROIs{j}.mnCoordinates([1:end 1],1), 'Color', colors(c,:), 'LineWidth', 2);
+              else
+                plot(ha, ROIs{j}.mnCoordinates([1:end 1],1), ROIs{j}.mnCoordinates([1:end 1],2), 'Color', colors(c,:), 'LineWidth', 2);
+              end
           end
           c = c + 1;
         end
@@ -93,6 +114,9 @@ function export_ROI(fname, ROIs, imgs, group, dpi)
     end
 
     %print(hf, ['-d' fext(2:end)], ['-r' num2str(dpi)], '-noui', '-bestfit', fullfile(fpath, [fname num2str(count) fext]));
+    ha = subplot('position', [0 (1-offset) 1 0.01], 'Parent', hf, 'Visible', 'off');
+    ht = title(ha, strrep(fname, '_', ' '), 'Visible', 'on', 'FontSize', 24);
+
     print(hf, ['-d' fext(2:end)], ['-r' num2str(dpi)], '-noui', '-bestfit', fullfile(fpath, [fname fext]));
   else
 

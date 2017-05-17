@@ -4,9 +4,25 @@ function [ratios, files] = study_heart_regeneration(do_export)
     do_export = false;
   end
 
-  files = find_segmentations('/Users/blanchou/Documents/SB07/Histology/modified_data/');
+  %titles = {'SB07', 'SB12', 'SB13', 'SB14'};
+  %dirs = {'/Users/blanchou/Documents/SB07/Histology/modified_data/'};
+  titles = {'SB07'};
 
-  title_name = 'SB07';
+  ratios = {};
+  files = {};
+
+  for i=1:length(titles)
+    [ratios{end+1}, files{end+1}] = compute_regeneration(titles{i}, do_export);
+  end
+
+  return;
+end
+
+function [ratios, files] = compute_regeneration(title_name, do_export)
+
+  fpath = ['/Users/blanchou/Documents/' title_name '/Histology/modified_data/'];
+
+  files = find_segmentations(fpath);
 
   ratios = NaN(length(files), 2);
   dpci = NaN(length(files), 1);
@@ -51,15 +67,39 @@ function [ratios, files] = study_heart_regeneration(do_export)
     end
   end
 
+  ratios(isnan(ratios)) = 0;
   ratios(:,end+1) = dpci;
 
-  display_ratios(ratios(:,1), dpci, title_name)
-  display_ratios(ratios(:,2), dpci, title_name)
+  h1 = display_ratios(ratios(:,1), dpci, title_name);
+  h2 = display_ratios(ratios(:,2), dpci, [title_name ' - 3 slices']);
+
+%{ 
+C.f. boxplot
+'whisker'       Maximum whisker length W.  Default is W=1.5.  Points
+                      are drawn as outliers if they are larger than
+                      Q3+W*(Q3-Q1) or smaller than Q1-W*(Q3-Q1), where Q1
+                      and Q3 are the 25th and 75th percentiles, respectively.
+                      The default value 1.5 corresponds to approximately +/-
+                      2.7 sigma and 99.3 coverage if the data are normally
+                      distributed.
+%}
+
+  epath = fullfile(pwd, 'export');
+
+  if (~exist(epath, 'dir'))
+    mkdir(epath);
+  end
+
+  print(h1, '-dpdf', '-noui', '-bestfit', fullfile(epath, [title_name '_ratios.pdf']));
+  print(h2, '-dpdf', '-noui', '-bestfit', fullfile(epath, [title_name '_ratios-3_slices.pdf']));
+
+  delete(h1);
+  delete(h2);
 
   return;
 end
 
-function display_ratios(ratios, dpci, title_name)
+function hfig = display_ratios(ratios, dpci, title_name)
 
   [H, p] = myttest(ratios, dpci);
   ratios = ratios*100;
@@ -76,12 +116,12 @@ function display_ratios(ratios, dpci, title_name)
     end
   end
 
-  figure;
+  hfig = figure;
   h = axes();
-  notBoxPlot(ratios, dpci);
+  notBoxPlot(ratios, dpci, 'jitter', 2);
   pos = get(h, 'XTick');
   pos = unique([0, pos]);
-  set(h, 'YLim', [0 50], 'XLim', [-1 ids(end)+1], 'XTick', pos, 'XTickLabel', num2str(pos(:)));
+  set(h, 'YLim', [0 max(50, ceil(max(ratios)/10)*10)], 'XLim', [-1 ids(end)+1], 'XTick', pos, 'XTickLabel', num2str(pos(:)));
 
   sigstar(groups, pvals);
 
