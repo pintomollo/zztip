@@ -4,9 +4,9 @@ function [ratios, files] = study_heart_regeneration(do_export)
     do_export = false;
   end
 
-  %titles = {'SB07', 'SB12', 'SB13', 'SB14'};
+  titles = {'SB07', 'SB12', 'SB13', 'SB14'};
   %dirs = {'/Users/blanchou/Documents/SB07/Histology/modified_data/'};
-  titles = {'SB07'};
+  %titles = {'SB07'};
 
   ratios = {};
   files = {};
@@ -30,7 +30,7 @@ function [ratios, files] = compute_regeneration(title_name, do_export)
   meta = fullfile(fpath, [title_name '.txt']);
   if (exist(meta, 'file'))
     fid = fopen(meta, 'r');
-    params = textscan(fid, '%s %d %d %f', 'CommentStyle', '#');
+    params = textscan(fid, '%s %f %d %f', 'CommentStyle', '#');
     fclose(fid);
 
     params{2} = double(params{2});
@@ -87,7 +87,11 @@ function [ratios, files] = compute_regeneration(title_name, do_export)
     dpci(i) = str2double(hits{i}{1});
 
     if (do_export)
-      export_ROI(prefix, ROIs, imgs);
+      if (any(ref))
+        export_ROI(prefix, ROIs, imgs, params{4}(ref));
+      else
+        export_ROI(prefix, ROIs, imgs);
+      end
     end
   end
 
@@ -97,14 +101,12 @@ function [ratios, files] = compute_regeneration(title_name, do_export)
 
   o = find_outliers(ratios(:,1), ratios(:,end));
 
-  h1 = display_ratios(ratios(~o,1), dpci(~o), title_name);
+  h1 = display_ratios(ratios(:,1), dpci, o, title_name);
   %h2 = display_ratios(ratios(:,2), dpci, [title_name ' - 3 slices']);
 
-  hold on;
-  scatter(ratios(o,end), ratios(o,1), [], [0 0 0], 'filled');
 
-  h2 = display_ratios(volumes(~o,1), dpci(~o), [title_name ' - heart']);
-  h3 = display_ratios(volumes(~o,2), dpci(~o), [title_name ' - injury']);
+  h2 = display_ratios(volumes(:,1), dpci, o, [title_name ' - heart'], 'Volume (mm^3)');
+  h3 = display_ratios(volumes(:,2), dpci, o, [title_name ' - injury'], 'Volume (mm^3)');
 
   epath = fullfile(pwd, 'export');
 
@@ -114,9 +116,13 @@ function [ratios, files] = compute_regeneration(title_name, do_export)
 
   print(h1, '-dpdf', '-noui', '-bestfit', fullfile(epath, [title_name '_ratios.pdf']));
   %print(h2, '-dpdf', '-noui', '-bestfit', fullfile(epath, [title_name '_ratios-3_slices.pdf']));
+  print(h2, '-dpdf', '-noui', '-bestfit', fullfile(epath, [title_name '_heart.pdf']));
+  print(h3, '-dpdf', '-noui', '-bestfit', fullfile(epath, [title_name '_injury.pdf']));
 
   delete(h1);
   %delete(h2);
+  delete(h2);
+  delete(h3);
 
   return;
 end
@@ -149,7 +155,21 @@ C.f. boxplot
   return;
 end
 
-function hfig = display_ratios(ratios, dpci, title_name)
+function hfig = display_ratios(ratios, dpci, outliers, title_name, y_label)
+
+  if (nargin < 5)
+    y_label = 'Fraction of injury (%)';
+  end
+
+  if (numel(outliers)~=numel(ratios))
+    outliers = false(size(ratios));
+  end
+
+  or = ratios(outliers);
+  od = dpci(outliers);
+
+  ratios = ratios(~outliers);
+  dpci = dpci(~outliers);
 
   [H, p] = myttest(ratios, dpci);
 
@@ -168,13 +188,20 @@ function hfig = display_ratios(ratios, dpci, title_name)
   hfig = figure;
   h = axes();
   notBoxPlot(ratios, dpci, 'jitter', 2);
+  hold on;
+  scatter(od, or, [], [0 0 0], 'filled');
   pos = get(h, 'XTick');
   pos = unique([0, pos]);
-  set(h, 'YLim', [0 max(50, ceil(max(ratios)/10)*10)], 'XLim', [-1 ids(end)+1], 'XTick', pos, 'XTickLabel', num2str(pos(:)));
+  if (all(ratios<10))
+    ylims = get(h, 'YLim');
+    set(h, 'YLim', [0 ylims(2)],  'XLim', [-1 ids(end)+1], 'XTick', pos, 'XTickLabel', num2str(pos(:)));
+  else
+    set(h, 'YLim', [0 ceil(max(ratios)/10)*10], 'XLim', [-1 ids(end)+1], 'XTick', pos, 'XTickLabel', num2str(pos(:)));
+  end
 
   sigstar(groups, pvals);
 
-  ylabel('Fraction of injury (%)')
+  ylabel(y_label)
   xlabel('dpci')
 
   title(title_name);

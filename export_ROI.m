@@ -1,19 +1,17 @@
-function export_ROI(fname, ROIs, imgs, group, dpi)
+function export_ROI(fname, ROIs, imgs, varargin)
 
-  if (nargin < 4)
-    group = true;
-    dpi = 150;
-  elseif (nargin < 5)
-    if (islogical(group))
-      dpi = 150;
+  group = true;
+  dpi = 150;
+  resol = -1;
+  for i=1:length(varargin)
+    if (islogical(varargin{i}))
+      group = varargin{i};
+    elseif (isfloat(varargin{i}))
+      resol = varargin{i};
     else
-      dpi = group;
-      group = true;
+      dpi = varargin{i};
     end
   end
-
-  nmax = 1000;
-
   [fpath, fname, fext] = fileparts(fname);
 
   if (isempty(fpath))
@@ -111,6 +109,10 @@ function export_ROI(fname, ROIs, imgs, group, dpi)
           c = c + 1;
         end
       end
+
+      if (i==1 && resol>0)
+        plot(ha, [30 30+0.1/resol], size(img,1)-[30 30], 'k', 'LineWidth', 3);
+      end
     end
 
     %print(hf, ['-d' fext(2:end)], ['-r' num2str(dpi)], '-noui', '-bestfit', fullfile(fpath, [fname num2str(count) fext]));
@@ -169,6 +171,9 @@ function export_ROI(fname, ROIs, imgs, group, dpi)
           end
           c = c + 1;
         end
+      end
+      if (resol>0)
+        plot(ha, [10 10+0.1/resol], [10 10], 'k', 'LineWidth', 3);
       end
 
       print(hf, ['-d' fext(2:end)], ['-r' num2str(dpi)], '-noui', '-bestfit', fullfile(fpath, [fname num2str(i+count-1) fext]));
