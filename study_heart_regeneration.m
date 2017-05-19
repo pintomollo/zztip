@@ -21,10 +21,27 @@ end
 function [ratios, files] = compute_regeneration(title_name, do_export)
 
   fpath = ['/Users/blanchou/Documents/' title_name '/Histology/modified_data/'];
+  if (~exist(fpath, 'dir'))
+    fpath = ['/Users/blanchou/Documents/' title_name '/'];
+  end
 
   files = find_segmentations(fpath);
 
-  ratios = NaN(length(files), 2);
+  meta = fullfile(fpath, [title_name '.txt']);
+  if (exist(meta, 'file'))
+    fid = fopen(meta, 'r');
+    params = textscan(fid, '%s %d %d %f', 'CommentStyle', '#');
+    fclose(fid);
+
+    params{2} = double(params{2});
+    params{3} = double(params{3});
+  else
+    params = {''};
+  end
+
+  ratios = NaN(length(files), 1);
+  volumes = NaN(length(files), 2);
+  %ratios = NaN(length(files), 2);
   dpci = NaN(length(files), 1);
 
   hits = regexp(files, '.*SB\d+_\w(\d+)dpci_.*', 'tokens');
@@ -35,6 +52,8 @@ function [ratios, files] = compute_regeneration(title_name, do_export)
     [tmp, prefix1, junk] = fileparts(fname);
     [tmp, prefix2, junk] = fileparts(tmp);
     prefix = [prefix2 '_' prefix1];
+
+    ref = strncmp(params{1}, prefix2, length(prefix));
 
     data = [fname '.zip'];
     imgs = [fname '.tif'];
@@ -58,7 +77,12 @@ function [ratios, files] = compute_regeneration(title_name, do_export)
     largest = largest(:,1);
 
     ratios(i, 1) = sum(injury(:,2))/sum(heart(:,2));
-    ratios(i, 2) = sum(injury(ismember(injury(:,1), largest),2))/sum(heart(ismember(heart(:,1), largest),2));
+  %  ratios(i, 2) = sum(injury(ismember(injury(:,1), largest),2))/sum(heart(ismember(heart(:,1), largest),2));
+
+    if (any(ref))
+      volumes(i,1) = sum(heart(:,2) * params{2}(ref) * params{3}(ref) * params{4}(ref).^2);
+      volumes(i,2) = sum(injury(:,2) * params{2}(ref) * params{3}(ref) * params{4}(ref).^2);
+    end
 
     dpci(i) = str2double(hits{i}{1});
 
@@ -68,10 +92,39 @@ function [ratios, files] = compute_regeneration(title_name, do_export)
   end
 
   ratios(isnan(ratios)) = 0;
+  ratios = ratios*100;
   ratios(:,end+1) = dpci;
 
-  h1 = display_ratios(ratios(:,1), dpci, title_name);
-  h2 = display_ratios(ratios(:,2), dpci, [title_name ' - 3 slices']);
+  o = find_outliers(ratios(:,1), ratios(:,end));
+
+  h1 = display_ratios(ratios(~o,1), dpci(~o), title_name);
+  %h2 = display_ratios(ratios(:,2), dpci, [title_name ' - 3 slices']);
+
+  hold on;
+  scatter(ratios(o,end), ratios(o,1), [], [0 0 0], 'filled');
+
+  h2 = display_ratios(volumes(~o,1), dpci(~o), [title_name ' - heart']);
+  h3 = display_ratios(volumes(~o,2), dpci(~o), [title_name ' - injury']);
+
+  epath = fullfile(pwd, 'export');
+
+  if (~exist(epath, 'dir'))
+    mkdir(epath);
+  end
+
+  print(h1, '-dpdf', '-noui', '-bestfit', fullfile(epath, [title_name '_ratios.pdf']));
+  %print(h2, '-dpdf', '-noui', '-bestfit', fullfile(epath, [title_name '_ratios-3_slices.pdf']));
+
+  delete(h1);
+  %delete(h2);
+
+  return;
+end
+
+function outliers = find_outliers(vals, groups)
+
+  labels = unique(groups);
+  outliers = false(size(vals));
 
 %{ 
 C.f. boxplot
@@ -83,18 +136,15 @@ C.f. boxplot
                       2.7 sigma and 99.3 coverage if the data are normally
                       distributed.
 %}
+  for i=1:length(labels)
+    curr = (groups==labels(i));
+    y = vals(curr);
+    pc = prctile(y, [25 75]);
+    w = 1.5 * diff(pc);
 
-  epath = fullfile(pwd, 'export');
-
-  if (~exist(epath, 'dir'))
-    mkdir(epath);
+    o = (y < pc(1)-w | y > pc(2)+w);
+    outliers(curr) = o;
   end
-
-  print(h1, '-dpdf', '-noui', '-bestfit', fullfile(epath, [title_name '_ratios.pdf']));
-  print(h2, '-dpdf', '-noui', '-bestfit', fullfile(epath, [title_name '_ratios-3_slices.pdf']));
-
-  delete(h1);
-  delete(h2);
 
   return;
 end
@@ -102,7 +152,6 @@ end
 function hfig = display_ratios(ratios, dpci, title_name)
 
   [H, p] = myttest(ratios, dpci);
-  ratios = ratios*100;
 
   ids = unique(dpci(:));
   groups = {};
@@ -157,7 +206,8 @@ function folders = find_segmentations(fname)
     if (files(i).isdir && files(i).name(1)~='.')
       fdir = fullfile(fname, files(i).name);
 
-      if (exist([fdir '.tif'], 'file') && exist([fdir '.zip'], 'file'))
+      %if (exist([fdir '.tif'], 'file') && exist([fdir '.zip'], 'file'))
+      if (exist([fdir '.zip'], 'file'))
         folders{end+1} = fdir;
       else
         subdir = find_segmentations(fdir);
