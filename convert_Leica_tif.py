@@ -47,14 +47,3 @@ Converts the output of the Leica SB configuration into single tiffs.
 
         args = shlex.split(cmd)
         subprocess.call(args)
-
-  #cmd='Trinity --seqType {ftype} {data}--max_memory 8G --CPU 4 --trimmomatic ' \
- #     '--verbose --FORCE_INCHWORM_KMER_METHOD --quality_trimming_params "ILLUMINACLIP:{trimmpath}adapters/TruSeq3-PE.fa:2:30:12:1:true MAXINFO:40:0.4 LEADING:3 TRAILING:3 MINLEN:40" ' \
- #     '--output {outfile}_trinity --full_cleanup'.format(ftype=ftype, data=data, trimmpath=trimmpath, outfile=outfile)
-#
-#  if ftype!=None and data!=None:
-#    print('\n*******************************************')
-#    print(cmd)
-#    print('*******************************************\n')
-#    args = shlex.split(cmd)
-#    subprocess.call(args)

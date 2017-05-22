@@ -47,12 +47,13 @@ function [new_stack] = save_data(fname, data, varargin)
   if (isstruct(fname))
     new_stack = fname;
 
-    tiffobj = new_stack.tiffobj;
-    tagstruct = new_stack.tagstruct;
+    %tiffobj = new_stack.tiffobj;
+    %tagstruct = new_stack.tagstruct;
     type = new_stack.type;
     files = new_stack.fname;
     scaling_params = new_stack.scaling;
   else
+    %{
     if (type(1)=='u')
       byte = Tiff.SampleFormat.UInt;
     elseif (type(1)=='i')
@@ -62,10 +63,15 @@ function [new_stack] = save_data(fname, data, varargin)
       type = 'uint8';
       byte = Tiff.SampleFormat.UInt;
     end
+    if (split_rgb || ~is_rgb)
+      photo = Tiff.Photometric.MinIsBlack;
+    else
+      photo = Tiff.Photometric.RGB;
+    end
 
     tagstruct = struct('ImageLength', h, ...
                        'ImageWidth', w, ...
-                       'Photometric', Tiff.Photometric.MinIsBlack, ...
+                       'Photometric', photo, ...
                        'BitsPerSample', 8, ...
                        'SamplesPerPixel', 1 + 2*(~split_rgb && is_rgb), ...
                        'RowsPerStrip', h, ...
@@ -85,6 +91,7 @@ function [new_stack] = save_data(fname, data, varargin)
     if (~isempty(metadata))
       tagstruct.ImageDescription = metadata;
     end
+    %}
 
     is_new = true;
     if (split_rgb)
@@ -118,40 +125,42 @@ function [new_stack] = save_data(fname, data, varargin)
   is_new = is_new(ones(1,ncolors));
   ndata = length(data);
   for i=1:ndata
-    if (~split_rgb && is_rgb)
-      if (~is_new)
-        tiffobj.writeDirectory();
-      else
-        tiffobj = Tiff(files{1}, 'w8');
-        is_new = false;
-      end
-      tiffobj.setTag(tagstruct);
+    if (~split_rgb)
+      %if (~is_new)
+      %  tiffobj.writeDirectory();
+      %else
+      %  tiffobj = Tiff(files{1}, 'w8');
+      %  is_new = false;
+      %end
+      %tiffobj.setTag(tagstruct);
 
       if (is_sparse)
         [cast_img, scaling_params] = scaled_cast(full(img), scaling_params, type);
       else
         [cast_img, scaling_params] = scaled_cast(img, scaling_params, type);
       end
-      tiffobj.write(cast_img);
+      %tiffobj.write(cast_img);
+      imwrite(cast_img, files{1}, 'WriteMode', 'append');
     else
       for n=1:c
 
         indx = mod(n, ncolors) + 1;
 
-        if (~is_new(indx))
-          tiffobj(indx).writeDirectory();
-        else
-          tiffobj(indx) = Tiff(files{indx}, 'w8');
-          is_new(indx) = false;
-        end
-        tiffobj(indx).setTag(tagstruct);
+        %if (~is_new(indx))
+        %  tiffobj(indx).writeDirectory();
+        %else
+        %  tiffobj(indx) = Tiff(files{indx}, 'w8');
+        %  is_new(indx) = false;
+        %end
+        %tiffobj(indx).setTag(tagstruct);
 
         if (is_sparse)
           [cast_img, scaling_params] = scaled_cast(full(img(:,:,n)), scaling_params, type);
         else
           [cast_img, scaling_params] = scaled_cast(img(:,:,n), scaling_params, type);
         end
-        tiffobj(indx).write(cast_img);
+        %tiffobj(indx).write(cast_img);
+        imwrite(cast_img, files{indx}, 'WriteMode', 'append');
       end
     end
 
@@ -166,24 +175,28 @@ function [new_stack] = save_data(fname, data, varargin)
       [nh,nw,c] = size(img);
 
       if (nh ~= h || nw~=w || (split_rgb && mod(c, 3)~=0))
-        for j=1:length(tiffobj)
-          tiffobj(j).close();
-        end
+        %for j=1:length(tiffobj)
+        %  tiffobj(j).close();
+        %end
         error('Size of the provided images do not match !')
       end
     end
   end
 
   if (~is_partial)
-    for j=1:length(tiffobj)
-      tiffobj(j).close();
-    end
+    %for j=1:length(tiffobj)
+    %  tiffobj(j).close();
+    %end
 
     clearvars new_stack;
   else
+    %new_stack = struct('fname', files, ...
+    %                   'tiffobj', tiffobj, ...
+    %                   'tagstruct', tagstruct, ...
+    %                   'scaling', scaling_params, ...
+    %                   'type', type);
+
     new_stack = struct('fname', files, ...
-                       'tiffobj', tiffobj, ...
-                       'tagstruct', tagstruct, ...
                        'scaling', scaling_params, ...
                        'type', type);
   end
