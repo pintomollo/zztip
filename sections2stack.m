@@ -13,7 +13,7 @@ function sections2stack(folder)
 
     movefile(fullfile(fldr, ['_resized' filesep '*.tif']), fldr, 'f');
 
-    rmdir(fldr);
+    rmdir(fullfile(fldr, '_resized'));
   end
 
   create_stacks(folder);
@@ -31,8 +31,8 @@ function folders = recursive_resize(folder)
     if (files(i).isdir && files(i).name(1)~='.')
       has_dir = true;
 
-      if (~strncmp(files(i).name, '_resized', 8))
-        new_folder = recursive_resize(fullfile(folder, files(i).name));
+      if (~exist(fullfile(folder, [files(i).name '.tif']), 'file') && ~strncmp(files(i).name, '_resized', 8))
+        new_folders = recursive_resize(fullfile(folder, files(i).name));
         folders = [folders; new_folders];
       end
     end

@@ -1,12 +1,20 @@
 function create_stacks(folder)
 
-  folder = absolutepath(folder);
+  if (iscell(folder))
 
-  if (~exist(folder, 'dir'))
-    error([folder ' is not a valid directory.']);
+    for i=1:length(folder)
+      disp(['Stacking ' folder{i}]);
+      stack_folder(folder{i});
+    end
+  else
+    folder = absolutepath(folder);
+
+    if (~exist(folder, 'dir'))
+      error([folder ' is not a valid directory.']);
+    end
+
+    recursive_stacks(folder);
   end
-
-  recursive_stacks(folder);
 
   return;
 end
