@@ -8,6 +8,43 @@ function [ratios, files] = study_heart_regeneration(do_export)
   %dirs = {'/Users/blanchou/Documents/SB07/Histology/modified_data/'};
   %titles = {'SB07'};
 
+  sizes = get_fish_sizes('SB16');
+  groups = unique(sizes(:,end));
+  [mvals, svals] = mymean(sizes(:,1), 1, sizes(:,end));
+
+  figure;hold on;
+  bar(1:length(groups), mvals(:));
+  errorbar(1:length(groups), mvals(:), svals(:));
+
+  keyboard
+
+  lengths = {};
+  volumes = {};
+
+  for i=1:length(titles)
+    [lengths{end+1}, volumes{end+1}] = compute_properties(titles{i}, do_export);
+  end
+  lengths = cat(1, lengths{:});
+  [groups, indx, jndx] = unique(lengths(:,2));
+
+  for i=1:length(lengths)
+    lengths{i,1}(:,end+1) = jndx(i);
+  end
+  tmp = lengths(:,1);
+  vals = cat(1, tmp{:});
+  [mvals, svals] = mymean(vals(:,1:2), 1, vals(:,end));
+
+  figure;hold on;
+  bar(1:2*length(groups), mvals(:));
+  errorbar(1:2*length(groups), mvals(:), svals(:));
+
+  for i=1:length(volumes)
+    volumes{i}(:,end+1) = i;
+  end
+  volumes = cat(1, volumes{:});
+  [mvals, svals] = mymean(volumes(:,1), 1, volumes(:,end));
+  keyboard
+
   ratios = {};
   files = {};
 
@@ -17,6 +54,144 @@ function [ratios, files] = study_heart_regeneration(do_export)
 
   return;
 end
+
+function [sizes] = get_fish_sizes(title_name)
+
+  fpath = ['/Users/blanchou/Documents/' title_name '/Brightfield/modified_data/'];
+  if (~exist(fpath, 'dir'))
+    fpath = ['/Users/blanchou/Documents/' title_name '/'];
+  end
+
+  files = find_segmentations(fpath);
+
+  meta = fullfile(fpath, [title_name '.txt']);
+  if (exist(meta, 'file'))
+    fid = fopen(meta, 'r');
+    params = textscan(fid, '%s %f %d %f', 'CommentStyle', '#');
+    fclose(fid);
+
+    params{2} = double(params{2});
+    params{3} = double(params{3});
+  else
+    params = {''};
+  end
+
+  sizes = cell(length(files), 1);
+
+  hits = regexp(files, '.*SB(\d+)_\w_.*', 'tokens');
+
+  for i=1:length(files)
+    fname = files{i};
+
+    [tmp, prefix, junk] = fileparts(fname);
+
+    ref = strncmp(params{1}, prefix, length(prefix));
+
+    data = [fname '.zip'];
+    imgs = [fname '.tif'];
+
+    if (~isempty(hits{i}))
+      ROIs = ReadImageJROI(data);
+      props = analyze_ROI(ROIs, 'Length');
+
+      props(:,end+1) = str2double(hits{i}{1});
+
+      if (any(ref))
+        props(:,1) = props(:,1) * params{4}(ref);
+      end
+
+      sizes{i} = props;
+    end
+  end
+
+  sizes = sizes(~all(cellfun('isempty', sizes), 2), :);
+  sizes = cat(1, sizes{:});
+
+  return;
+end
+
+function [lengths, volumes] = compute_properties(title_name, do_export)
+
+  fpath = ['/Users/blanchou/Documents/' title_name '/Histology/modified_data/'];
+  if (~exist(fpath, 'dir'))
+    fpath = ['/Users/blanchou/Documents/' title_name '/'];
+  end
+
+  files = find_segmentations(fpath);
+
+  meta = fullfile(fpath, [title_name '.txt']);
+  if (exist(meta, 'file'))
+    fid = fopen(meta, 'r');
+    params = textscan(fid, '%s %f %d %f', 'CommentStyle', '#');
+    fclose(fid);
+
+    params{2} = double(params{2});
+    params{3} = double(params{3});
+  else
+    params = {''};
+  end
+
+  lengths = cell(length(files), 2);
+  volumes = NaN(length(files), 1);
+
+  hits = regexp(files, '.*SB\d+_\w(\d+)dpci_.*', 'tokens');
+
+  for i=1:length(files)
+    fname = files{i};
+
+    [tmp, prefix1, junk] = fileparts(fname);
+    [tmp, prefix2, junk] = fileparts(tmp);
+    prefix = [prefix2 '_' prefix1];
+
+    ref = strncmp(params{1}, prefix2, length(prefix));
+
+    data = [fname '.zip'];
+    imgs = [fname '.tif'];
+
+    if (isempty(hits{i}))
+      specie = regexp(fname, '.*SB\d+_(\w)uninj_long.*', 'tokens');
+
+      if (~isempty(specie))
+        ROIs = ReadImageJROI(data);
+        props = analyze_ROI(ROIs, 'Length');
+        props = [props(1:2:end, 1), props(2:2:end,1)];
+
+        if (any(ref))
+          lengths(i,1) = {props * params{4}(ref)};
+          lengths(i,2) = specie{1};
+        end
+
+        if (do_export)
+          if (any(ref))
+            export_ROI(prefix, ROIs, imgs, params{4}(ref));
+          else
+            export_ROI(prefix, ROIs, imgs);
+          end
+        end
+      end
+
+    elseif (str2double(hits{i}{1}) == 7)
+      ROIs = ReadImageJROI(data);
+      props = analyze_ROI(ROIs, 'Slice', 'Area');
+      [props, indxs] = sortrows(props, [1 -2]);
+      ROIs = ROIs(indxs);
+
+      is_injury = ([1; diff(props(:,1))] == 0);
+      heart = props(~is_injury, :);
+      heart = interpolate(heart);
+
+      if (any(ref))
+        volumes(i,1) = sum(heart(:,2) * params{2}(ref) * params{3}(ref) * params{4}(ref).^2);
+      end
+    end
+  end
+
+  lengths = lengths(~all(cellfun('isempty', lengths), 2), :);
+  volumes = volumes(~isnan(volumes));
+
+  return;
+end
+
 
 function [ratios, files] = compute_regeneration(title_name, do_export)
 
@@ -230,15 +405,26 @@ function folders = find_segmentations(fname)
   folders = {};
 
   for i=1:length(files)
-    if (files(i).isdir && files(i).name(1)~='.')
-      fdir = fullfile(fname, files(i).name);
+    if (files(i).name(1)~='.')
+      if (files(i).isdir)
+        fdir = fullfile(fname, files(i).name);
 
-      %if (exist([fdir '.tif'], 'file') && exist([fdir '.zip'], 'file'))
-      if (exist([fdir '.zip'], 'file'))
-        folders{end+1} = fdir;
+        %if (exist([fdir '.tif'], 'file') && exist([fdir '.zip'], 'file'))
+        if (exist([fdir '.zip'], 'file'))
+          folders{end+1} = fdir;
+        else
+          subdir = find_segmentations(fdir);
+          folders = [folders, subdir];
+        end
       else
-        subdir = find_segmentations(fdir);
-        folders = [folders, subdir];
+        [tmp, file, ext] = fileparts(files(i).name);
+        fdir = fullfile(fname, file);
+
+        if (strncmp(ext, '.zip', 4))
+          if (exist([fdir '.tif'], 'file') && ~exist(fdir, 'dir'))
+            folders{end+1} = fdir;
+          end
+        end
       end
     end
   end

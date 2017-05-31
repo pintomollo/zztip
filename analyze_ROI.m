@@ -10,7 +10,7 @@ function [props, coords] = analyze_ROI(ROIs, varargin)
         do_props(1) = true;
       case 'Area'
         do_props(2) = true;
-      case 'Perimeter'
+      case {'Perimeter', 'Length'}
         do_props(3) = true;
       case 'BoundingBox'
         do_props(4) = true;
