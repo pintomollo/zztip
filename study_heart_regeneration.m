@@ -10,7 +10,7 @@ function [ratios, files] = study_heart_regeneration(do_export)
 
   sizes = get_fish_sizes('SB16');
   groups = unique(sizes(:,end));
-  [mvals, svals] = mymean(sizes(:,1), 1, sizes(:,end));
+  [mvals, svals, ns] = mymean(sizes(:,1), 1, sizes(:,end));
 
   figure;hold on;
   bar(1:length(groups), mvals(:));
@@ -32,7 +32,8 @@ function [ratios, files] = study_heart_regeneration(do_export)
   end
   tmp = lengths(:,1);
   vals = cat(1, tmp{:});
-  [mvals, svals] = mymean(vals(:,1:2), 1, vals(:,end));
+  [mvals, svals, ns] = mymean(vals(:,1:2), 1, vals(:,end));
+  keyboard
 
   figure;hold on;
   bar(1:2*length(groups), mvals(:));
@@ -42,7 +43,7 @@ function [ratios, files] = study_heart_regeneration(do_export)
     volumes{i}(:,end+1) = i;
   end
   volumes = cat(1, volumes{:});
-  [mvals, svals] = mymean(volumes(:,1), 1, volumes(:,end));
+  [mvals, svals, ns] = mymean(volumes(:,1), 1, volumes(:,end));
   keyboard
 
   ratios = {};
@@ -259,7 +260,9 @@ function [ratios, files] = compute_regeneration(title_name, do_export)
       volumes(i,2) = sum(injury(:,2) * params{2}(ref) * params{3}(ref) * params{4}(ref).^2);
     end
 
-    dpci(i) = str2double(hits{i}{1});
+    if (~isempty(hits{i}))
+      dpci(i) = str2double(hits{i}{1});
+    end
 
     if (do_export)
       if (any(ref))
@@ -268,6 +271,23 @@ function [ratios, files] = compute_regeneration(title_name, do_export)
         export_ROI(prefix, ROIs, imgs);
       end
     end
+  end
+
+  valids = ~isnan(dpci);
+  ratios = ratios(valids,:);
+  volumes = volumes(valids,:);
+  dpci = dpci(valids,:);
+
+  [vals, junk, indxs] = unique(dpci);
+  short = (vals(2:end) - vals(1:end-1) < 3);
+
+  if (any(short))
+    for i=1:length(short)
+      if (short(i))
+        vals(i+1) = vals(i);
+      end
+    end
+    dpci = vals(indxs);
   end
 
   ratios(isnan(ratios)) = 0;
