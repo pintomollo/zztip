@@ -306,14 +306,16 @@ function [ratios, files] = compute_regeneration(title_name, do_export)
 
   o = find_outliers(ratios(:,1), ratios(:,end));
 
-  h1 = display_ratios(ratios(:,1), dpci, o, title_name);
+  tname = strrep(title_name, '_', '\_');
+
+  h1 = display_ratios(ratios(:,1), dpci, o, tname);
   %h2 = display_ratios(ratios(:,2), dpci, [title_name ' - 3 slices']);
 
 
-  h2 = display_ratios(volumes(:,1), dpci, o, [title_name ' - heart'], 'Volume (mm^3)');
-  h3 = display_ratios(volumes(:,2), dpci, o, [title_name ' - injury'], 'Volume (mm^3)');
+  h2 = display_ratios(volumes(:,1), dpci, o, [tname ' - heart'], 'Volume (mm^3)');
+  h3 = display_ratios(volumes(:,2), dpci, o, [tname ' - injury'], 'Volume (mm^3)');
 
-  h4 = display_correlations(volumes, dpci, o, title_name);
+  h4 = display_correlations(volumes, dpci, o, tname);
 
   epath = fullfile(pwd, 'export');
 
@@ -444,12 +446,22 @@ function hfig = display_correlations(values, dpci, outliers, title_name)
   for i=1:length(ids)
     curr = (dpci==ids(i));
     scatter(values(curr,1), values(curr, 2), [], colors(ids(i),:), 'filled');
+    [mvals(i,:), junk] = mymean(values(curr, :));
   end
   scatter(or(:,1), or(:,2), [], [0 0 0], 'filled');
   ylims = get(h, 'YLim');
   xlims = get(h, 'XLim');
   %axis equal
   set(h, 'YLim', [0 ylims(2)],  'XLim', [0 xlims(2)]);
+
+  ylims(1) = 0;
+  xlims(1) = 0;
+
+  for i=1:length(ids)
+    plot(mvals(i, [1 1]), ylims, 'Color', colors(ids(i),:));
+    plot(xlims, mvals(i, [2 2]), 'Color', colors(ids(i),:));
+    [mvals(i,:), junk] = mymean(values(curr, :));
+  end
 
   caxis(h, [0 max(92, max(ids))]);
   colormap(h, [0 0 0; colors]);
