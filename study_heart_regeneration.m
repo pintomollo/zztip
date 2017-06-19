@@ -4,7 +4,7 @@ function [ratios, files] = study_heart_regeneration(do_export)
     do_export = false;
   end
 
-  titles = {'SB07', 'SB12', 'SB13', 'SB14'};
+  titles = {'SB07_Xhellerii', 'SB12_Xmaculatus', 'SB13_Ptitteya', 'SB14_Dpentazona'};
   %dirs = {'/Users/blanchou/Documents/SB07/Histology/modified_data/'};
   %titles = {'SB07'};
 
@@ -12,11 +12,11 @@ function [ratios, files] = study_heart_regeneration(do_export)
   groups = unique(sizes(:,end));
   [mvals, svals, ns] = mymean(sizes(:,1), 1, sizes(:,end));
 
-  figure;hold on;
-  bar(1:length(groups), mvals(:));
-  errorbar(1:length(groups), mvals(:), svals(:));
+%  figure;hold on;
+%  bar(1:length(groups), mvals(:));
+%  errorbar(1:length(groups), mvals(:), svals(:));
 
-  keyboard
+%  keyboard
 
   lengths = {};
   volumes = {};
@@ -33,18 +33,18 @@ function [ratios, files] = study_heart_regeneration(do_export)
   tmp = lengths(:,1);
   vals = cat(1, tmp{:});
   [mvals, svals, ns] = mymean(vals(:,1:2), 1, vals(:,end));
-  keyboard
+%  keyboard
 
-  figure;hold on;
-  bar(1:2*length(groups), mvals(:));
-  errorbar(1:2*length(groups), mvals(:), svals(:));
+%  figure;hold on;
+%  bar(1:2*length(groups), mvals(:));
+%  errorbar(1:2*length(groups), mvals(:), svals(:));
 
   for i=1:length(volumes)
     volumes{i}(:,end+1) = i;
   end
   volumes = cat(1, volumes{:});
   [mvals, svals, ns] = mymean(volumes(:,1), 1, volumes(:,end));
-  keyboard
+%  keyboard
 
   ratios = {};
   files = {};
@@ -113,7 +113,7 @@ end
 
 function [lengths, volumes] = compute_properties(title_name, do_export)
 
-  fpath = ['/Users/blanchou/Documents/' title_name '/Histology/modified_data/'];
+  fpath = ['/Users/blanchou/Documents/' title_name '/Histology/AFOG/modified_data/'];
   if (~exist(fpath, 'dir'))
     fpath = ['/Users/blanchou/Documents/' title_name '/'];
   end
@@ -196,10 +196,11 @@ end
 
 function [ratios, files] = compute_regeneration(title_name, do_export)
 
-  fpath = ['/Users/blanchou/Documents/' title_name '/Histology/modified_data/'];
+  fpath = ['/Users/blanchou/Documents/' title_name '/Histology/AFOG/modified_data/'];
   if (~exist(fpath, 'dir'))
     fpath = ['/Users/blanchou/Documents/' title_name '/'];
   end
+  csv_headers = {'Slice index', 'Ventricle area (mm2)', 'Injury area (mm2)'};
 
   files = find_segmentations(fpath);
 
@@ -265,11 +266,20 @@ function [ratios, files] = compute_regeneration(title_name, do_export)
     end
 
     if (do_export)
+      data = heart;
+      data(:,end+1) = 0;
+      if (~isempty(injury))
+        data(injury(1,1)-1+[1:size(injury,1)], end) = injury(:,end);
+      end
+
       if (any(ref))
+        data(:,2:end) = data(:,2:end) * params{4}(ref).^2;
         export_ROI(prefix, ROIs, imgs, params{4}(ref));
       else
         export_ROI(prefix, ROIs, imgs);
       end
+
+      export_csv(fullfile(tmp, [prefix2 '.csv']), prefix1, data, csv_headers);
     end
   end
 
@@ -303,6 +313,8 @@ function [ratios, files] = compute_regeneration(title_name, do_export)
   h2 = display_ratios(volumes(:,1), dpci, o, [title_name ' - heart'], 'Volume (mm^3)');
   h3 = display_ratios(volumes(:,2), dpci, o, [title_name ' - injury'], 'Volume (mm^3)');
 
+  h4 = display_correlations(volumes, dpci, o, title_name);
+
   epath = fullfile(pwd, 'export');
 
   if (~exist(epath, 'dir'))
@@ -313,11 +325,13 @@ function [ratios, files] = compute_regeneration(title_name, do_export)
   %print(h2, '-dpdf', '-noui', '-bestfit', fullfile(epath, [title_name '_ratios-3_slices.pdf']));
   print(h2, '-dpdf', '-noui', '-bestfit', fullfile(epath, [title_name '_heart.pdf']));
   print(h3, '-dpdf', '-noui', '-bestfit', fullfile(epath, [title_name '_injury.pdf']));
+  print(h4, '-dpdf', '-noui', '-bestfit', fullfile(epath, [title_name '_correlation.pdf']));
 
   delete(h1);
   %delete(h2);
   delete(h2);
   delete(h3);
+  delete(h4);
 
   return;
 end
@@ -380,6 +394,10 @@ function hfig = display_ratios(ratios, dpci, outliers, title_name, y_label)
     end
   end
 
+  if (ids(end) < 90)
+    ids(end+1) = 90;
+  end
+
   hfig = figure;
   h = axes();
   notBoxPlot(ratios, dpci, 'jitter', 2);
@@ -403,6 +421,49 @@ function hfig = display_ratios(ratios, dpci, outliers, title_name, y_label)
 
   return;
 end
+
+function hfig = display_correlations(values, dpci, outliers, title_name)
+
+  if (numel(outliers)~=numel(values(:,1)))
+    outliers = false(size(values,1),1);
+  end
+
+  or = values(outliers, :);
+  od = dpci(outliers);
+
+  values = values(~outliers, :);
+  dpci = dpci(~outliers);
+
+  ids = unique(dpci);
+  colors = brewermap(max(92, max(ids)), 'RdYlBu');
+  mvals = NaN(length(ids), 2);
+
+  hfig = figure;
+  h = axes();
+  hold on;
+  for i=1:length(ids)
+    curr = (dpci==ids(i));
+    scatter(values(curr,1), values(curr, 2), [], colors(ids(i),:), 'filled');
+  end
+  scatter(or(:,1), or(:,2), [], [0 0 0], 'filled');
+  ylims = get(h, 'YLim');
+  xlims = get(h, 'XLim');
+  %axis equal
+  set(h, 'YLim', [0 ylims(2)],  'XLim', [0 xlims(2)]);
+
+  caxis(h, [0 max(92, max(ids))]);
+  colormap(h, [0 0 0; colors]);
+  colorbar('peer', h);
+
+  ylabel('Injury volume mm^3');
+  xlabel('Heart volume mm^3');
+
+  title(title_name);
+
+  return;
+end
+
+
 
 function [new] = interpolate(old)
 
