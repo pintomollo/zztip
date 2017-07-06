@@ -75,8 +75,8 @@ function [fins, rays] = parse_fin_ROI(ROIs, resol)
       dists = bsxfun(@minus, curr_coords(:,1), curr_coords(:,1).').^2 + ...
               bsxfun(@minus, curr_coords(:,2), curr_coords(:,2).').^2;
 
-      %thresh = median(min(dists+max(dists(:))*(dists==0)))/5
-      thresh = 900;
+      thresh = median(min(dists+max(dists(:))*(dists==0)))/5;
+      %thresh = 900;
 
       curr_rays = NaN(3, nrays);
       count = 1;
@@ -85,7 +85,7 @@ function [fins, rays] = parse_fin_ROI(ROIs, resol)
         hits = dists(j, :) < thresh;
         if (any(hits(j+1:end)))
           l = sort(curr_props(hits, 3));
-          curr_rays(1:2, count) = l;
+          curr_rays(1:2, count) = l(1:2);
           count = count + 1;
         elseif ~any(hits(1:j-1))
           curr_rays(1:2, count) = curr_props([j j], 3);

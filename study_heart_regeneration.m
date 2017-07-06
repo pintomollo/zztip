@@ -5,6 +5,7 @@ function [ratios, files] = study_heart_regeneration(do_export)
   end
 
   titles = {'SB07_Xhellerii', 'SB12_Xmaculatus', 'SB13_Ptitteya', 'SB14_Dpentazona'};
+  %titles = {'SB12_Xmaculatus'};
   %dirs = {'/Users/blanchou/Documents/SB07/Histology/modified_data/'};
   %titles = {'SB07'};
 
@@ -308,6 +309,7 @@ function [ratios, files] = compute_regeneration(title_name, do_export)
 
   tname = strrep(title_name, '_', '\_');
 
+  o(:) = false;
   h1 = display_ratios(ratios(:,1), dpci, o, tname);
   %h2 = display_ratios(ratios(:,2), dpci, [title_name ' - 3 slices']);
 
@@ -400,11 +402,15 @@ function hfig = display_ratios(ratios, dpci, outliers, title_name, y_label)
     ids(end+1) = 90;
   end
 
+  [m,s,c] = mymean(ratios, 1, dpci);
+  s = s ./ sqrt(c);
+
   hfig = figure;
   h = axes();
   notBoxPlot(ratios, dpci, 'jitter', 2);
   hold on;
   scatter(od, or, [], [0 0 0], 'filled');
+  errorbar(unique(dpci), m, s, 'k')
   pos = get(h, 'XTick');
   pos = unique([0, pos]);
   if (all(ratios<10))
