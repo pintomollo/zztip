@@ -1,5 +1,13 @@
 function sections2stack(folder)
 
+  if (nargin==0 || isempty(folder))
+    folder = uigetdir();
+
+    if (~ischar(folder))
+      return;
+    end
+  end
+
   folder = absolutepath(folder);
 
   if (~exist(folder, 'dir'))
