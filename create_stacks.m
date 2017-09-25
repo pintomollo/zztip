@@ -48,7 +48,8 @@ function stack_folder(folder)
   files = dir(fullfile(folder, '*.tif'));
 
   values = struct2cell(files);
-  files = fullfile(folder, values(ismember(fieldnames(files), 'name'), :));
+  files = values(ismember(fieldnames(files), 'name'), :);
+  files = fullfile(folder, files(~strncmp(files, '.', 1)));
 
   sname = fullfile(cur_path, [fname '.tif']);
 

@@ -162,13 +162,14 @@ function [lengths, volumes] = compute_properties(title_name, do_export)
           lengths(i,1) = {props * params{4}(ref)};
           lengths(i,2) = specie{1};
         end
+      end
 
-        if (do_export)
-          if (any(ref))
-            export_ROI(prefix, ROIs, imgs, params{4}(ref));
-          else
-            export_ROI(prefix, ROIs, imgs);
-          end
+      if (do_export)
+        ROIs = ReadImageJROI(data);
+        if (any(ref))
+          export_ROI(prefix, ROIs, imgs, params{4}(ref));
+        else
+          export_ROI(prefix, ROIs, imgs);
         end
       end
 
