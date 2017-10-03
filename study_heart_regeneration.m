@@ -5,7 +5,7 @@ function [ratios, files] = study_heart_regeneration(do_export)
   end
 
   titles = {'SB07_Xhellerii', 'SB12_Xmaculatus', 'SB13_Ptitteya', 'SB14_Dpentazona'};
-  %titles = {'SB12_Xmaculatus'};
+  %titles = {'SB07_Xhellerii'};
   %dirs = {'/Users/blanchou/Documents/SB07/Histology/modified_data/'};
   %titles = {'SB07'};
 
@@ -310,7 +310,7 @@ function [ratios, files] = compute_regeneration(title_name, do_export)
 
   tname = strrep(title_name, '_', '\_');
 
-  o(:) = false;
+  %o(:) = false;
   h1 = display_ratios(ratios(:,1), dpci, o, tname);
   %h2 = display_ratios(ratios(:,2), dpci, [title_name ' - 3 slices']);
 
@@ -407,19 +407,24 @@ function hfig = display_ratios(ratios, dpci, outliers, title_name, y_label)
   s = s ./ sqrt(c);
 
   hfig = figure;
-  h = axes();
-  notBoxPlot(ratios, dpci, 'jitter', 2);
+  h = axes(hfig);
+  myplot(h, dpci, ratios, 2);
+  %keyboard
+
+  %hfig = figure;
+  %h = axes();
+  %notBoxPlot(ratios, dpci, 'jitter', 2);
   hold on;
-  scatter(od, or, [], [0 0 0], 'filled');
-  errorbar(unique(dpci), m, s, 'k')
+  scatter(h, od, or, [], [0.5 0.5 0.5], 'filled');
+  %errorbar(unique(dpci), m, s, 'k')
   pos = get(h, 'XTick');
   pos = unique([0, pos]);
-  if (all(ratios<10))
+  %if (all(ratios<10))
     ylims = get(h, 'YLim');
-    set(h, 'YLim', [0 ylims(2)],  'XLim', [-1 ids(end)+1], 'XTick', pos, 'XTickLabel', num2str(pos(:)));
-  else
-    set(h, 'YLim', [0 ceil(max(ratios)/10)*10], 'XLim', [-1 ids(end)+1], 'XTick', pos, 'XTickLabel', num2str(pos(:)));
-  end
+    set(h, 'YLim', [0 ylims(2)],  'XLim', [-1 ids(end)+5], 'XTick', pos, 'XTickLabel', num2str(pos(:)));
+  %else
+  %  set(h, 'YLim', [0 ceil(max(ratios)/10)*10], 'XLim', [-1 ids(end)+1], 'XTick', pos, 'XTickLabel', num2str(pos(:)));
+  %end
 
   sigstar(groups, pvals);
 
@@ -527,6 +532,30 @@ function folders = find_segmentations(fname)
         end
       end
     end
+  end
+
+  return;
+end
+
+function myplot(hfig, x, y, jitScale)
+
+
+  [mu, sem, c] = mymean(y, 1, x);
+  X = unique(x);
+  sem = sem ./ sqrt(c);
+  colors = brewermap(5, 'Blues');
+  set(hfig, 'NextPlot', 'add');
+
+  for k=1:length(X)
+    l=mu(k)-sem(k);
+    u=mu(k)+sem(k);
+    ptch=patch(hfig, [X(k)-jitScale, X(k)+jitScale, X(k)+jitScale, X(k)-jitScale],...
+            [l,l,u,u], colors(2,:));
+    lne=line(hfig, [X(k)-jitScale*1.25 X(k)+jitScale*1.25], [mu(k) mu(k)], 'Color', colors(4,:), 'LineWidth', 2);
+
+    these = (x==X(k));
+    J=(rand(size(x(these)))-0.5)*jitScale;
+    scatter(hfig, x(these)+J, y(these), 'k', 'full');
   end
 
   return;
