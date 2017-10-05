@@ -220,6 +220,7 @@ function [ratios, files] = compute_regeneration(title_name, do_export)
 
   ratios = NaN(length(files), 1);
   volumes = NaN(length(files), 2);
+  colors = NaN(length(files), 3);
   %ratios = NaN(length(files), 2);
   dpci = NaN(length(files), 1);
 
@@ -249,14 +250,18 @@ function [ratios, files] = compute_regeneration(title_name, do_export)
     heart = interpolate(heart);
     injury = interpolate(injury);
 
-    largest = sortrows(injury, -2);
-    if (size(largest, 1) > 3)
-      largest = largest(1:3,:);
-    end
-    largest = largest(:,1);
+    %largest = sortrows(injury, -2);
+    %if (size(largest, 1) > 3)
+    %  largest = largest(1:3,:);
+    %end
+    %largest = largest(:,1);
+    %ratios(i, 2) = sum(injury(ismember(injury(:,1), largest),2))/sum(heart(ismember(heart(:,1), largest),2));
+
+    pix = extract_ROI_pixels(imgs, ROIs(is_injury));
+    pix = cat(1, pix{:});
+    colors(i,:) = mean(pix);
 
     ratios(i, 1) = sum(injury(:,2))/sum(heart(:,2));
-  %  ratios(i, 2) = sum(injury(ismember(injury(:,1), largest),2))/sum(heart(ismember(heart(:,1), largest),2));
 
     if (any(ref))
       volumes(i,1) = sum(heart(:,2) * params{2}(ref) * params{3}(ref) * params{4}(ref).^2);
@@ -289,6 +294,7 @@ function [ratios, files] = compute_regeneration(title_name, do_export)
   ratios = ratios(valids,:);
   volumes = volumes(valids,:);
   dpci = dpci(valids,:);
+  colors = colors(valids,:);
 
   [vals, junk, indxs] = unique(dpci);
   short = (vals(2:end) - vals(1:end-1) < 3);
@@ -320,6 +326,10 @@ function [ratios, files] = compute_regeneration(title_name, do_export)
 
   h4 = display_correlations(volumes, dpci, o, tname);
 
+  h5 = display_ratios(colors(:,1), dpci, o, [tname ' - Red'], 'Intensity (pix)');
+  h6 = display_ratios(colors(:,2), dpci, o, [tname ' - Green'], 'Intensity (pix)');
+  h7 = display_ratios(colors(:,3), dpci, o, [tname ' - Blue'], 'Intensity (pix)');
+
   epath = fullfile(pwd, 'export');
 
   if (~exist(epath, 'dir'))
@@ -331,12 +341,17 @@ function [ratios, files] = compute_regeneration(title_name, do_export)
   print(h2, '-dpdf', '-noui', '-bestfit', fullfile(epath, [title_name '_heart.pdf']));
   print(h3, '-dpdf', '-noui', '-bestfit', fullfile(epath, [title_name '_injury.pdf']));
   print(h4, '-dpdf', '-noui', '-bestfit', fullfile(epath, [title_name '_correlation.pdf']));
+  print(h5, '-dpdf', '-noui', '-bestfit', fullfile(epath, [title_name '_R.pdf']));
+  print(h6, '-dpdf', '-noui', '-bestfit', fullfile(epath, [title_name '_G.pdf']));
+  print(h7, '-dpdf', '-noui', '-bestfit', fullfile(epath, [title_name '_B.pdf']));
 
   delete(h1);
-  %delete(h2);
   delete(h2);
   delete(h3);
   delete(h4);
+  delete(h5);
+  delete(h6);
+  delete(h7);
 
   return;
 end
@@ -408,14 +423,14 @@ function hfig = display_ratios(ratios, dpci, outliers, title_name, y_label)
 
   hfig = figure;
   h = axes(hfig);
+  ax = h;
   myplot(h, dpci, ratios, 2);
   %keyboard
 
   %hfig = figure;
   %h = axes();
   %notBoxPlot(ratios, dpci, 'jitter', 2);
-  hold on;
-  scatter(h, od, or, [], [0.5 0.5 0.5], 'filled');
+
   %errorbar(unique(dpci), m, s, 'k')
   pos = get(h, 'XTick');
   pos = unique([0, pos]);
@@ -425,13 +440,27 @@ function hfig = display_ratios(ratios, dpci, outliers, title_name, y_label)
   %else
   %  set(h, 'YLim', [0 ceil(max(ratios)/10)*10], 'XLim', [-1 ids(end)+1], 'XTick', pos, 'XTickLabel', num2str(pos(:)));
   %end
-
   sigstar(groups, pvals);
-
   ylabel(y_label)
   xlabel('dpci')
 
   title(title_name);
+
+  if (any(outliers))
+  % Plot second plot
+    if (max(or) > ylims(2))
+      ax = axes('HandleVisibility', get(h, 'HandleVisibility'), 'Units',get(h,'Units'), 'Position',get(h,'Position'),'Parent',get(h,'Parent'));
+      scatter(ax, od, or, [], [0.5 0.5 0.5], 'filled');
+      set(ax,'YAxisLocation','right','Color','none', ...
+          'XGrid','off','YGrid','off','Box','off', ...
+          'HitTest','off');
+      ylim2 = get(ax,'YLim');
+      set(ax, 'YLim', [0 ylim2(2)],  'XLim', [-1 ids(end)+5], 'XTick', pos, 'XTickLabel', num2str(pos(:)));
+    else
+      hold on;
+      scatter(h, od, or, [], [0.5 0.5 0.5], 'filled');
+    end
+  end
 
   return;
 end
