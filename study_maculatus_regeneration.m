@@ -1,5 +1,27 @@
 function study_maculatus_regeneration
 
+  fname = '/Users/blanchou/Documents/SB17/Brightfield/SB17_Xmaculatus_amputated/SB17';
+
+  data = [fname '.zip'];
+  imgs = [fname '.tif'];
+  meta = [fname '.txt'];
+
+  [values, headers] = parse_metadata_table(meta);
+  types = find(strncmp('type', headers, 4));
+  resol = find(strncmp('resol', headers, 5));
+  resol = values{resol};
+
+  ROIs = ReadImageJROI(data);
+  %[props, coords] = analyze_ROI(ROIs, 'Slice', 'Area', 'Perimeter');
+  [fins, rays] = parse_fin_ROI(ROIs, resol);
+  %fins(end+1:length(frames{1}), :) = NaN;
+
+  keyboard
+
+  indxs = unique(values{types});
+  disp(indxs)
+  return;
+
   resolution = 7.25;
   nouter = 8;
 

@@ -4,12 +4,12 @@ function [ratios, files] = study_heart_regeneration(do_export)
     do_export = false;
   end
 
-  titles = {'SB07_Xhellerii', 'SB12_Xmaculatus', 'SB13_Ptitteya', 'SB14_Dpentazona'};
-  %titles = {'SB07_Xhellerii'};
+  %titles = {'SB07_Xhellerii', 'SB12_Xmaculatus', 'SB13_Ptitteya', 'SB14_Dpentazona'};
+  titles = {'SB12_Xmaculatus'};
   %dirs = {'/Users/blanchou/Documents/SB07/Histology/modified_data/'};
   %titles = {'SB07'};
 
-  sizes = get_fish_sizes('SB16');
+  sizes = get_fish_sizes('SB16_Whole_Fish');
   groups = unique(sizes(:,end));
   [mvals, svals, ns] = mymean(sizes(:,1), 1, sizes(:,end));
 

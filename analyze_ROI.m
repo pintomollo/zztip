@@ -5,25 +5,25 @@ function [props, coords] = analyze_ROI(ROIs, varargin)
   resol = 1;
 
   for i=1:nargin-1
-    switch varargin{i}
-      case 'Slice'
-        do_props(1) = true;
-      case 'Area'
-        do_props(2) = true;
-      case {'Perimeter', 'Length'}
-        do_props(3) = true;
-      case 'BoundingBox'
-        do_props(4) = true;
-      case 'Centroid'
-        do_props(5) = true;
-      case 'PCA'
-        do_props(6) = true;
-      otherwise
-        if (isnumeric(varargin{i}))
-          resol = varargin{i};
-        else
+    if (isnumeric(varargin{i}))
+      resol = varargin{i};
+    elseif (ischar(varargin{i}))
+      switch varargin{i}
+        case 'Slice'
+          do_props(1) = true;
+        case 'Area'
+          do_props(2) = true;
+        case {'Perimeter', 'Length'}
+          do_props(3) = true;
+        case 'BoundingBox'
+          do_props(4) = true;
+        case 'Centroid'
+          do_props(5) = true;
+        case 'PCA'
+          do_props(6) = true;
+        otherwise
           disp(['Unknown property ''' varargin{i} ''', skipping.']);
-        end
+      end
     end
   end
 
@@ -31,13 +31,14 @@ function [props, coords] = analyze_ROI(ROIs, varargin)
   props_indx = cumsum(do_props .* [1 1 1 4 2 2]);
   props = NaN(nROIs, props_indx(end));
   coords = cell(nROIs, 1);
+  resol = [resol(:); ones(nROIs - numel(resol), 1)*resol(1)];
 
   for i=1:nROIs
     type = ROIs{i}.strType;
     if (strncmp(type, 'Line', 4))
-      pos = ROIs{i}.vnLinePoints([1 2; 3 4]) * resol;
+      pos = ROIs{i}.vnLinePoints([1 2; 3 4]) * resol(i);
     else
-      pos = ROIs{i}.mnCoordinates * resol;
+      pos = ROIs{i}.mnCoordinates * resol(i);
     end
 
     if (do_props(1))
