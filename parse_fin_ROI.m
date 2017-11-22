@@ -1,4 +1,4 @@
-function [fins, rays] = parse_fin_ROI(ROIs, resol)
+function [fins, rays, paths] = parse_fin_ROI(ROIs, resol)
 
   [props, data] = analyze_ROI(ROIs, resol, 'Slice', 'Area', 'Perimeter');
 
@@ -48,6 +48,7 @@ function [fins, rays] = parse_fin_ROI(ROIs, resol)
 
   fins = NaN(nids, 4);
   rays = cell(nids, 1);
+  paths = cell(nids, 1);
 
   for i=1:nids
     curr_id = i;
@@ -79,27 +80,33 @@ function [fins, rays] = parse_fin_ROI(ROIs, resol)
       thresh = 900;
 
       curr_rays = NaN(3, nrays);
+      curr_paths = cell(1, nrays);
       count = 1;
       for j=1:nrays
 
         hits = dists(j, :) < thresh;
         if (any(hits(j+1:end)))
-          l = sort(curr_props(hits, 3));
+          [l, ii] = sort(curr_props(hits, 3));
           curr_rays(1:2, count) = l;
+          tmp_data = curr_data(hits);
+          curr_paths{count} = tmp_data{ii(2)}/resol;
           count = count + 1;
         elseif ~any(hits(1:j-1))
           curr_rays(1:2, count) = curr_props([j j], 3);
+          curr_paths{count} = curr_data{j}/resol;
           count = count + 1;
         end
       end
 
       curr_rays = curr_rays(:, 1:count-1);
+      curr_paths = curr_paths(:, 1:count-1);
 
       is_full = (curr_rays(2,:) > max(curr_rays(1,:))/2);
       curr_rays(3,:) = is_full;
 
       fins(curr_id, :) = [props(curr_fin, 2) max(curr_rays(2, :)) min(curr_rays(2, is_full)) ymax-ymin];
       rays{curr_id} = curr_rays;
+      paths{curr_id} = curr_paths;
     end
   end
 
