@@ -76,8 +76,8 @@ function [fins, rays, paths] = parse_fin_ROI(ROIs, resol)
       dists = bsxfun(@minus, curr_coords(:,1), curr_coords(:,1).').^2 + ...
               bsxfun(@minus, curr_coords(:,2), curr_coords(:,2).').^2;
 
-      %thresh = median(min(dists+max(dists(:))*(dists==0)))/5
-      thresh = 900;
+      thresh = median(min(dists+max(dists(:))*(dists==0)))/5;
+      %thresh = 900;
 
       curr_rays = NaN(3, nrays);
       curr_paths = cell(1, nrays);

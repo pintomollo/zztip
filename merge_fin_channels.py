@@ -5,14 +5,13 @@ import sys
 import os
 import re
 import glob
-import shutil
 import shlex, subprocess
 
 if __name__=='__main__':
   helpmess="""Usage:
-convert_Leica_tif dir
+merge_fin_channels dir
 
-Converts the output of the Leica SB configuration into single tiffs.
+Converts three independent channels into one RGB image.
 """
   # Inputs
   if len(sys.argv)<2:
@@ -42,13 +41,8 @@ Converts the output of the Leica SB configuration into single tiffs.
         pattern=os.path.join(basedir, '{mypattern}{ext}'.format(mypattern='_'.join(parts),ext=ext))
         group=glob.glob(pattern)
 
-        for chanel in group[0:-2]:
-          print('Moving {chanel}'.format(chanel=chanel))
-          basedir,basename=os.path.split(chanel)
-          shutil.move(chanel, os.path.join(outdir,basename))
-
         outfile=os.path.join(outdir, '{myfile}{ext}'.format(myfile='_'.join(parts[0:-1]),ext=ext))
-        cmd='convert {files} -evaluate-sequence Mean -type Grayscale -auto-level {outfile}'.format(files=' '.join(group[-2:]), outfile=outfile)
+        cmd='convert {files} -normalize -quiet -combine {outfile}'.format(files=' '.join(group[1:]), outfile=outfile)
         print(cmd)
 
         args = shlex.split(cmd)

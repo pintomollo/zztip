@@ -7,9 +7,16 @@ function study_fin_regeneration
   %         '/Users/blanchou/Documents/SB07/Histology/modified_data/SB07_X30dpci_I_AFOG/heart3'};
 
   %files = {'/Users/blanchou/Documents/Data/Regen/SB04'};
+  files = {'/Users/blanchou/Documents/SB01/Brightfield/SB01_Leica_amputated_AB368/modified_data/SB01', ...
+           '/Users/blanchou/Documents/SB04/Brightfield/SB04_Leica_amputated_AB371/modified_data/SB04', ...
+           '/Users/blanchou/Documents/SB05/Brightfield/SB05_Leica_amputated_calcein_SA120814/modified_data/SB05'};
+
+  %{
   files = {'/Users/blanchou/Documents/Data/Regen/SB01', ...
            '/Users/blanchou/Documents/Data/Regen/SB04', ...
            '/Users/blanchou/Documents/Data/Regen/SB05'};
+  %}
+
   resolution = 5.64;
   nouter = 7;
 
@@ -30,6 +37,8 @@ function study_fin_regeneration
     data = [fname '.zip'];
     imgs = [fname '.tif'];
     meta = [fname '.txt'];
+
+    disp(meta)
 
     fid = fopen(meta, 'r');
     frames = textscan(fid, '%s %s %d %s', 'CommentStyle', '#');
