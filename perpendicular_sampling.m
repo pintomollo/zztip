@@ -1,4 +1,4 @@
-function [values, perp_path, dpos] = perpendicular_sampling(img, path, perp_path, dpos, opts)
+function [values, path, perp_path, dpos] = perpendicular_sampling(img, path, perp_path, dpos, opts)
 
   if (nargin == 2)
     [path, opts] = deal(img, path);
