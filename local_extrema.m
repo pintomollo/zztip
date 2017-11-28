@@ -12,7 +12,7 @@ function [xmax,imax,xmin,imin] = extrema(x, nneigh)
 %   extrama values in a [-NNEIGHBORS +NNEIGHBORS] local window.
 %
 %   Based on EXTRAM by
-%   Lic. on Physics Carlos Adrián Vargas Aguilera
+%   Lic. on Physics Carlos Adri?n Vargas Aguilera
 %   Physical Oceanography MS candidate
 %   UNIVERSIDAD DE GUADALAJARA 
 %   Mexico, 2004
@@ -54,6 +54,11 @@ dx = differentiator(x, 'super');
 nneigh = ceil(nneigh);
 if (nneigh > 1)
   window = 2*nneigh + 1;
+  
+  if (window > length(x))
+    return;
+  end
+  
   indxs = [1:nneigh nneigh+2:window].';
   ssize = [window, 1];
   lmax = colfilt(x, ssize, 'sliding', @(y)(max(y(indxs,:), [], 1)));
