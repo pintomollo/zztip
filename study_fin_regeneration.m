@@ -129,7 +129,7 @@ function study_fin_regeneration
   h1=subplot(1,2,1);notBoxPlot(whole_bif);
   h2=subplot(1,2,2);notBoxPlot(regen_bif);
   linkaxes([h1 h2]);
-  ylim([0 8000])
+  ylim([0 9000])
 
   figure;
   h1=subplot(1,2,1);notBoxPlot(whole_ratio);
@@ -138,12 +138,19 @@ function study_fin_regeneration
   ylim([0 1])
 
   figure;
+  h1=subplot(1,2,1);notBoxPlot(whole_seg);
+  h2=subplot(1,2,2);notBoxPlot(regen_seg);
+  linkaxes([h1 h2]);
+  ylim([0 500])
+
+  figure;
   h1=subplot(1,2,1);notBoxPlot(whole_nums);
   h2=subplot(1,2,2);notBoxPlot(regen_nums);
   linkaxes([h1 h2]);
 
   figure;
   subplot(1,2,1);notBoxPlot([whole_bif(:); regen_bif(:)], [ones(numel(whole_bif), 1); ones(numel(regen_bif(:)),1)*2]);
+  ylim([0 9000])
   subplot(1,2,2);notBoxPlot([whole_ratio(:); regen_ratio(:)], [ones(numel(whole_ratio), 1); ones(numel(regen_ratio(:)),1)*2]);
   ylim([0 1])
   %figure;boxplot(all_rays(whole, :).', all_types(valids).');
