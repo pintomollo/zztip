@@ -7,8 +7,8 @@ function study_maculatus
   %fname = '/Users/blanchou/Documents/SB01/Brightfield/SB01_Leica_amputated_AB368/modified_data/SB01';
   %resolution = 5.64;
 
-  fname = '/Users/blanchou/Documents/SB05/Brightfield/SB05_Leica_amputated_calcein_SA120814/modified_data/SB05';
-  resolution = 5.64;
+  %fname = '/Users/blanchou/Documents/SB05/Brightfield/SB05_Leica_amputated_calcein_SA120814/modified_data/SB05';
+  %resolution = 5.64;
 
   nouter = 7;
 
@@ -36,6 +36,7 @@ function study_maculatus
 
   periods = get_segment_length(imgs, paths);
   keyboard
+
   %{
   for i=1:ndata
     figure;h1=subplot(1,2,1);hold on;h2=subplot(1,2,2);hold on;

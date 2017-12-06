@@ -42,7 +42,7 @@ Converts three independent channels into one RGB image.
         group=glob.glob(pattern)
 
         outfile=os.path.join(outdir, '{myfile}{ext}'.format(myfile='_'.join(parts[0:-1]),ext=ext))
-        cmd='convert {files} -normalize -quiet -combine {outfile}'.format(files=' '.join(group[1:]), outfile=outfile)
+        cmd='convert {file1} {file2} {file3} -normalize -quiet -combine {outfile}'.format(file1=group[1],file2=group[3],file3=group[2], outfile=outfile)
         print(cmd)
 
         args = shlex.split(cmd)

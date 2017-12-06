@@ -87,13 +87,13 @@ function [fins, rays, paths] = parse_fin_ROI(ROIs, resol)
         hits = dists(j, :) < thresh;
         if (any(hits(j+1:end)))
           [l, ii] = sort(curr_props(hits, 3));
-          curr_rays(1:2, count) = l;
+          curr_rays(1:2, count) = l(1:2);
           tmp_data = curr_data(hits);
-          curr_paths{count} = tmp_data{ii(2)}/resol;
+          curr_paths{count} = tmp_data{ii(2)};
           count = count + 1;
         elseif ~any(hits(1:j-1))
           curr_rays(1:2, count) = curr_props([j j], 3);
-          curr_paths{count} = curr_data{j}/resol;
+          curr_paths{count} = curr_data{j};
           count = count + 1;
         end
       end

@@ -1,4 +1,4 @@
-function all_periods = get_segment_length(imgs, rays, params)
+function all_periods = get_segment_length(imgs, rays, resol, params)
 % GET_SEGMENT_LENGTH estimates the average length of the ray segments using
 %   the Fourier transform of the averaged perpendicular sampling of each ray
 %
@@ -8,20 +8,24 @@ function all_periods = get_segment_length(imgs, rays, params)
 
   width = 15;
   navg = 100;
-  if (nargin == 3 && ~isempty(params))
+  if (nargin == 4 && ~isempty(params))
     width = params(1);
     if numel(params) > 1
       navg = params(2);
     end
+  elseif (nargin < 3)
+    resol = 1;
   end
 
   ndata = length(rays);
   all_periods = cell(ndata, 1);
   imgs = double(imgs);
+
   imgs = imgs - gaussian_mex(imgs, 10);
   all_sizes = NaN(ndata, 1);
 
   for i=1:ndata
+
     img = imgs(:,:,i);
     curr_rays = rays{i};
     nrays = length(curr_rays);
@@ -29,19 +33,25 @@ function all_periods = get_segment_length(imgs, rays, params)
     periods = NaN(nrays,1);
 
     for j=1:nrays
+      ray = curr_rays{j} / resol;
 
-      ray = curr_rays{j};
-      periods(j) = get_period(img, ray, 45, width);
+      tmp = get_period(img, ray, 45, width);
+      if (~isempty(tmp))
+        [periods(j)] = tmp;
+      end
     end
 
-    mper = movmedian(periods, 4);
-    mper = movmean((mper + mper(end:-1:1))/2, 4);
-    sper = std(mper);
+    mper = movmedian(periods, 4, 'omitnan');
+    mper = movmean((mper + mper(end:-1:1))/2, 4, 'omitnan');
+    sper = nanstd(mper);
 
     for j=1:nrays
-      ray = curr_rays{j};
+      ray = curr_rays{j} / resol;
 
-      periods(j) = get_period(img, ray, [mper(j) 4*sper], width);
+      tmp = get_period(img, ray, [mper(j) 4*sper], width);
+      if (~isempty(tmp))
+        periods(j) = tmp;
+      end
     end
 
     all_periods{i} = periods;
@@ -74,9 +84,12 @@ function all_periods = get_segment_length(imgs, rays, params)
     end
 
     for j=1:nrays
-      ray = curr_rays{j};
+      ray = curr_rays{j} / resol;
 
-      periods(j) = get_period(img, ray, [mper(j) sper(j)], width);
+      tmp = get_period(img, ray, [mper(j) sper(j)], width) * resol;
+      if (~ isempty(tmp))
+        periods(j) = tmp;
+      end
     end
 
     all_periods{i} = periods;
@@ -85,10 +98,21 @@ function all_periods = get_segment_length(imgs, rays, params)
   return;
 end
 
-function period = get_period(img, ray, mper, width)
+function [period, maxs] = get_period(img, ray, mper, width)
 
-  [pimg] = perpendicular_sampling(img, ray, [], [width,1], []);
-  pimg(isnan(pimg)) = 0;
+  if (nargout == 1)
+    [pimg] = perpendicular_sampling(img, ray, [], [width,1], []);
+  else
+    [pimg, full_ray] = perpendicular_sampling(img, ray, [], [width,1], []);
+  end
+
+  nanimg = isnan(pimg);
+  if (all(nanimg(:)))
+    period = NaN;
+    maxs = NaN(1,2);
+  else
+    pimg(nanimg) = 0;
+  end
 
   lavg = size(pimg,1);
   pos = [1:lavg];
@@ -114,6 +138,20 @@ function period = get_period(img, ray, mper, width)
   [junk, ii] = max(fmax);
 
   period = lavg./(indx(ii)-1);
+
+  if (nargout > 1)
+    freq = indx(ii);
+
+    f(1:freq-1, :) = 0;
+    f(freq+1:end-freq, :) = 0;
+    f(end-freq+2:end, :) = 0;
+
+    signal = real(ifft(mean(f, 2)));
+    [ymax, xmax] = find_extrema(-signal,period/2);
+
+    goods = (xmax >= period/2 & xmax <= length(signal)-period/2);
+    maxs = full_ray(xmax(goods),:);
+  end
 
   return;
 end
