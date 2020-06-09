@@ -123,7 +123,7 @@ function [result] = load_data(fid, indexes)
 %      r.close();
 %    end
 %  else
-    if(isstruct(fid) & isfield(fid, 'fname'))
+    if(isstruct(fid) && isfield(fid, 'fname'))
       fid = fid.fname;
     end
 

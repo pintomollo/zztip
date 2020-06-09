@@ -1,5 +1,20 @@
+% ANALYZE_ROI parses the ImageJ/Fiji ROIs to compute the requested
+% properties and return the corresponding path.
+%
+%   [PROPS, PATHS] = ANALYZE_ROI(ROIs, TYPES) parses the ROIs to calculate
+%                     the requested TYPES of properties. Available TYPES are
+%                     'Slice', 'Area', 'Perimeter', 'Centroid', 'BoundingBox',
+%                     and 'PCA'. TYPES are provided as string arguments. PROPS
+%                     is then a NxP matrix with N ROIs and P properties. PATHS
+%                     is a Nx1 cell matrix.
+%
+%   [...] = ANALYZE_ROI(ROIs, RESOL, ...) provides the pixel size to scale the
+%                     properties.
+%
+% Blanchoud Group, UNIFR
+% Simon Blanchoud
+% 08/06/2020
 function [props, coords] = analyze_ROI(ROIs, varargin)
-% Slice Area Perimeter Centroid BoundingBox PCA
 
   do_props = false(1,6);
   resol = 1;

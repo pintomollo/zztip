@@ -9,6 +9,9 @@ function [H, pval] = myttest(values, indexes, tails)
     tails = 'both';
   end
 
+  valids = isfinite(values);
+  values = values(valids);
+  indexes = indexes(valids);
   groups = unique(indexes(:)).';
 
   if (numel(groups) == 1)
@@ -23,7 +26,7 @@ function [H, pval] = myttest(values, indexes, tails)
 
   for i = 1:ngroups
     for j = 1:ngroups
-      [H(i,j), pval(i,j)] = ttest2(values(indexes==groups(i)), values(indexes==groups(j)), 0.05, tails);
+      [H(i,j), pval(i,j)] = ttest2(values(indexes==groups(i)), values(indexes==groups(j)), 'alpha', 0.05, 'tail', tails);
     end
   end
 

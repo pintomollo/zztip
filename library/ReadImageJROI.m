@@ -166,10 +166,17 @@ end
 
 if (iscell(cstrFilenames))
    % - Read each ROI in turn
-   cvsROI = cellfun(@ReadImageJROI, CellFlatten(cstrFilenames), 'UniformOutput', false);
+   %cvsROI = cellfun(@ReadImageJROI, CellFlatten(cstrFilenames), 'UniformOutput', false);
+   tmpROI = CellFlatten(cstrFilenames);
+   sROI = {};
+
+   for i=1:length(tmpROI)
+     cvsROI = ReadImageJROI(tmpROI{i});
+     sROI = [sROI; cvsROI];
+   end
    
    % - Return all ROIs
-   sROI = cvsROI;
+   %sROI = cvsROI;
    return;
    
 else
@@ -471,6 +478,8 @@ fclose(fidROI);
          vnCounters = [];
       end
    end
+end
+% --- END of ReadImageJROI.m ---
 
    function [filelist] = listzipcontents_rois(zipFilename)
       
@@ -479,25 +488,31 @@ fclose(fidROI);
       % Usage: [filelist] = listzipcontents_rois(zipFilename)
       
       % - Import java libraries
-      import java.util.zip.*;
-      import java.io.*;
+      %import java.util.zip.*;
+      %import java.io.*;
       
       % - Read file list via JAVA object
       filelist={};
-      in = ZipInputStream(FileInputStream(zipFilename));
-      entry = in.getNextEntry();
-      
+      %in = java.util.zip.ZipInputStream(java.io.FileInputStream(zipFilename));
+      in = javaObject('java.util.zip.ZipInputStream', javaObject('java.io.FileInputStream', zipFilename));
+      entry = javaMethod('getNextEntry', in);
+
       % - Filter ROI files
-      while (entry~=0)
-         name = entry.getName;
-         if (name.endsWith('.roi'))
+      %while (entry~=0)
+      while (isjava(entry) && ~entry.equals(0))
+         %name = entry.getName;
+         name = javaMethod('getName', entry);
+         %if (name.endsWith('.roi'))
+         if (strncmp(name(end-3:end),'.roi',4))
             filelist = cat(1,filelist,char(name));
          end;
-         entry = in.getNextEntry();
+         %entry = in.getNextEntry();
+         entry = javaMethod('getNextEntry', in);
       end;
       
       % - Close zip file
-      in.close();
+      %in.close();
+      javaMethod('close', in);
    end
 
 
@@ -551,5 +566,3 @@ fclose(fidROI);
       
    end
 
-end
-% --- END of ReadImageJROI.m ---

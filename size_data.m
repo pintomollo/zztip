@@ -29,7 +29,7 @@ function [nframes, ssize] = size_data(fname)
     %Substitute imfinfos to handle natively missing files
     if (isempty(fname))
       error('MATLAB:imfinfo:fileOpen', 'No file name was provided.');
-    elseif(isstruct(fname) & isfield(fname, 'fname'))
+    elseif(isstruct(fname) && isfield(fname, 'fname'))
       if (isempty(fname.fname))
         error('MATLAB:imfinfo:fileOpen', 'No file name was provided.');
       else
@@ -82,7 +82,7 @@ function [nframes, ssize] = size_data(fname)
       end
 
       nframes = length(infos);
-      ssize = [infos(1).Height infos(1).Width infos(1).SamplesPerPixel];
+      ssize = [infos(1).Height infos(1).Width 1+2*(infos(1).ColorType(1)=='t')];
       %if (nargout > 2)
       %  type = ['uint' num2str(infos(1).BitDepth)];
       %  switch lower(infos(1).SampleFormat(1))
