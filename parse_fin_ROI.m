@@ -53,7 +53,7 @@ function [fins, rays, paths] = parse_fin_ROI(ROIs, resol)
     curr_fin = (props(:,1) == curr_id & ~isnan(props(:,2)));
 
     % Make sure we have something to analyse
-    if (any(curr_fin))
+    if (sum(curr_rays)>1)
 
       % Get the actual data
       curr_props = props(curr_rays, :);
@@ -70,10 +70,11 @@ function [fins, rays, paths] = parse_fin_ROI(ROIs, resol)
       curr_props = curr_props(indx, :);
       curr_coords = curr_coords(indx, :);
 
-      dists = bsxfun(@minus, curr_coords(:,1), curr_coords(:,1).').^2 + ...
-              bsxfun(@minus, curr_coords(:,2), curr_coords(:,2).').^2;
+      dists = sqrt(bsxfun(@minus, curr_coords(:,1), curr_coords(:,1).').^2 + ...
+              bsxfun(@minus, curr_coords(:,2), curr_coords(:,2).').^2);
 
-      thresh = median(diag(dists,1))/5;
+      thresh = max(dists(:)) / 50;
+      %thresh = median(diag(dists,1))/sqrt(5)
 
       % We then collect the actual segmentations
       curr_data = data(curr_rays);
@@ -117,7 +118,7 @@ function [fins, rays, paths] = parse_fin_ROI(ROIs, resol)
       curr_rays = curr_rays(:, 1:count-1);
       curr_paths = curr_paths(:, 1:count-1);
 
-      % We pre-compute whether the ray is bifurcated
+      % We pre-compute whether the ray is amputated or not
       is_full = (curr_rays(2,:) > max(curr_rays(1,:))/2);
       curr_rays(3,:) = is_full;
 

@@ -110,9 +110,8 @@ if nargin==0
 end
 
 % Check if Y is of a suitable class 
-if ~isnumeric(y) && ~istable(y) && ~isa(y,'LinearModel')
-    fprintf('Variable y is a %s. This is not an allowed input type. see help %s\n',...
-        class(y), mfilename)
+if ~isnumeric(y)
+    disp('Variable y should be numeric.\n')
     return
 end
 

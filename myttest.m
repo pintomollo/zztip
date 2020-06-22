@@ -9,11 +9,7 @@ function [H, pval] = myttest(values, indexes, tails)
     tails = 'both';
   end
 
-  valids = isfinite(values);
-  values = values(valids);
-  indexes = indexes(valids);
   groups = unique(indexes(:)).';
-
   if (numel(groups) == 1)
     [H,pval] = ttest(values(:));
 
@@ -24,11 +20,25 @@ function [H, pval] = myttest(values, indexes, tails)
   H = zeros(ngroups);
   pval = H;
 
+  vfinites = isfinite(values);
   for i = 1:ngroups
-    for j = 1:ngroups
-      [H(i,j), pval(i,j)] = ttest2(values(indexes==groups(i)), values(indexes==groups(j)), 'alpha', 0.05, 'tail', tails);
+    validsi = vfinites & indexes==groups(i);
+    if (~any(validsi))
+      H(i,:) = NaN;
+      pval(i,:) = NaN;
+    else
+      for j = 1:ngroups
+        validsj = vfinites & indexes==groups(j);
+        if (~any(validsj))
+          H(i,j) = NaN;
+          pval(i,j) = NaN;
+        else
+          [H(i,j), pval(i,j)] = ttest2(values(validsi), values(validsj), 'alpha', 0.05, 'tail', tails);
+        end
+      end
     end
   end
+  H = H + (pval < 0.01) + (pval < 0.001);
 
   return;
 end
