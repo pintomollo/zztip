@@ -6,12 +6,141 @@
 % 09/06/2020
 function study_fin_regeneration
 
+  tensions = '/home/blanchou/Documents/Manuscripts/Fin_regen/criterion/stress_tension_tip.csv';
+  T = csvread(tensions);
+
+  c1 = reshape(T(end-8,:), 11, []);
+  c2 = reshape(T(end-6,:), 11, []);
+  c3 = reshape(T(end-2,:), 11, []);
+  c4 = reshape(T(end,:), 11, []);
+
+  figure;
+  subplot(2,2,1);bar(c1(:,1:3))
+  subplot(2,2,2);bar(c2(:,3:4))
+  subplot(2,2,3);bar(c3(:,2:4))
+  subplot(2,2,4);bar(c4(:,3:4))
+
+  figure;
+  subplot(2,2,1);bar(c1(:,[1 3])-1)
+  subplot(2,2,2);bar(c2(:,3:4))
+  subplot(2,2,3);bar(c3(:,[2 4])-c3(:,[3 3]))
+  subplot(2,2,4);bar(c4(:,3:4))
+
+  figure;
+  subplot(2,2,1);bar(c1(:,[1 3])-1);ylim([-1 1])
+  subplot(2,2,2);bar(c2(:,3:4));ylim([-5 5]);
+  subplot(2,2,3);bar(c3(:,[2 4])-c3(:,[3 3]));ylim([-1 1])
+  subplot(2,2,4);bar(c4(:,3:4));ylim([-5 5])
+
+  keyboard
+  return;
+
+  C = [-1.5 -1.0 -1.0 -1.0 -1.0 0; ...
+	-0.5 0.0 0.0 0.0 -0.5 1; ...
+ 	1.0 0.5 2.0 1.5 1.5 1; ...
+	0.5 0.5 0 -2 -1.5 0.5; ...
+	-0.1 0.0 -0.5 0.0 -0.5 -0.3; ...
+	0.01 0.15 0 0.2 0.2 0 ; ...
+	1.5 1.0 1.5 3.0 0.5 1.0; ...
+	2.5 2.5 4.0 -0.5 -2.0 1.0; ...
+	-0.9 0.4 -1.7 1.5 -1.7 -0.4; ...
+	-1.05 0 -0.45 0 -0.05 -0.15; ...
+	0.1 0.2 0.1 0 0.2 0];
+
+  B = [9.75 9.0 12.0 10 11 10.5 ; ...
+	1.0 -1.0 -2.0 -1.75 -0.5 -2; ...
+	11.0 11.25 14.0 12.25 13.75 12.5; ...
+        0.25 -0.375 0.5 -1.0 -0.375 -0.375; ...
+	1.25 1.5 2.75 1.6 2.15 1.75; ...
+	0.3 0.325 0.5 0.5 0.6 0.3; ...
+	12.75 11.0 10.75 12.75 14.25 12.5; ...
+	-0.6 1.875 0.5 0.125 1 0.75; ...
+	8.95 10.1 12.65 11.95 12.35 12; ...
+	1.175 1.25 1.975 1.4 1.725 1.925; ...
+	0.25 0.5 0.65 0.55 0.5 0.35];
+
+  O = [7.5 6.5 9.5 8 8.5 8; ...
+	  1 0.5 -1.5 -1.5 -1 0; ...
+	  11.5 11 14.05 11.5 12.5 10.5; ...
+	  -0.5 0 1 0 -2.5 -0.5;...
+	  1 1 1.5 1.3 1.5 1.2; ...
+	  0.3 0.5 0.7 0.6 0.6 0.3; ...
+	  12.5 10 11 14 13 12; ...
+	  -1.5 3.5 1.5 2.5 -3 -1; ...
+	  7.5 8.7 9.5 10 10 13; ...
+	  1.1 1.1 1.3 0.9 1.5 1.2; ...
+	  0.25 0.7 0.9 0.4 0.5 0.4];
+
+  E = [0.1 0.1 1 1 0.2 0.2 1 2 0.2 0.3 0.3].';
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+  A3 = 4* 2*(58 - [77 100 96 97 104 83 64 64 28 28 13 13 18 18 49 49 70 64 61 58 58 44 44 44 44] + 1.4) / 116;
+  A2 = 6* 2*(72 - [93 104 104 97 75 75 46 34 34 57 56 56 59 59 105 117 117 112 118 118 85 39 39 23 48] + 1.4) / 145;
+  A1 = 6* 2*(72 - [70 97 120 96 89 60 54 53 51 46 56 49 49 45 80 91 91 86 66 54 41 27 16 52 51] + 1.4) / 145;
+
+  indxs = cumsum(ones(size(A1)));
+  mirror = [1:13 12:-1:1];
+
+  A3v = cumsum(A3) ./ indxs;
+  A3d = cumsum(A3([end:-1:1])) ./ indxs;
+
+  A2v = cumsum(A2) ./ indxs;
+  A2d = cumsum(A2([end:-1:1])) ./ indxs;
+
+  A1v = cumsum(A1) ./ indxs;
+  A1d = cumsum(A1([end:-1:1])) ./ indxs;
+
+  A3t = A3v(mirror) - A3d(mirror);
+  A2t = A2v(mirror) - A2d(mirror);
+  A1t = A1v(mirror) - A1d(mirror);
+
+  C = [C; mean([A3t(1:6); A2t(1:6); A1t(1:6)].') - mean([A3t(7:13); A2t(7:13); A1t(7:13)].') NaN(1,3); ...
+	  10 0 -5 -15 -20 -10];
+
+  B = [B; mean([A3t; A2t; A1t].') NaN(1,3); ...
+  	-10 -2 12 25 25 8];
+
+  O = [O; A3t(1) A2t(1) A1t(1) NaN(1,3);
+	  -2 -1 2 2 -1 -1];
+
+  E = [E; 0.1; 2];
+
+  R = B - O;
+
+  %figure;hold on
+  %scatter(1:numel(A3), A3t, 'b')
+  %scatter(1:numel(A3), A2t, 'k')
+  %scatter(1:numel(A3), A1t, 'r')
+
+  S = sign(C(:,1));
+  S2 = sign(B(:,1)-B(:,2));
+  S3 = sign(R(:,3));
+
+  figure;subplot(2,2,1);
+  bar([S2.*(B(:,1)-B(:,2)) S2.*(B(:,2)-B(:,3))])
+  title('Slower growth in longer fins')
+  subplot(2,2,2);
+  bar(S.*(C(:,4)-C(:,3)))
+  title('Shallower cleft in narrower fins')
+  subplot(2,2,3);
+  bar([S3(:,[1 1 1]).*R(:,1:3)]);
+  hold on;scatter(1:numel(E), E, 'r');
+  title('Bifurcation in A2 or longer');
+  subplot(2,2,4);
+  bar(S3.*(R(:,4)-R(:,3)));
+  title('Distalisation in narrower fins')
+
+
+  keyboard
+
   % Absolute path to the used segmentation files
-  files = {'/home/blanchou/Documents/Manuscripts/Fin_regen/Regen/SB01', ...
-           '/home/blanchou/Documents/Manuscripts/Fin_regen/Regen/SB04', ...
-           '/home/blanchou/Documents/Manuscripts/Fin_regen/Regen/SB05', ...
-           '/home/blanchou/Documents/Manuscripts/Fin_regen/Regen/AJ02', ...
-           '/home/blanchou/Documents/Manuscripts/Fin_regen/Regen/DP50'};
+  files = {'/home/blanchou/Documents/Manuscripts/Fin_regen/revisions/Regen/SB01', ...
+           '/home/blanchou/Documents/Manuscripts/Fin_regen/revisions/Regen/SB04', ...
+           '/home/blanchou/Documents/Manuscripts/Fin_regen/revisions/Regen/SB05', ...
+           '/home/blanchou/Documents/Manuscripts/Fin_regen/revisions/Regen/AJ02', ...
+           '/home/blanchou/Documents/Manuscripts/Fin_regen/revisions/Regen/DP03', ...
+           '/home/blanchou/Documents/Manuscripts/Fin_regen/revisions/Regen/DP50'};
 
   % David bifurcation data
   doublets = [0 0 NaN NaN 0 0 NaN NaN 0 0 NaN NaN 0 0; ...
@@ -36,7 +165,27 @@ function study_fin_regeneration
   resolution = 5.64;
   nouter = 7;
   bif_thresh = 10;
+  plot_segmentation = false;
+  nindx = 11;
 
+  % Plot an example of segmentation if requested
+  if (plot_segmentation)
+    data = [files{1} '.zip'];
+    fimg = [files{1} '.tif'];
+    ROIs = ReadImageJROI(data);
+    [props, data] = analyze_ROI(ROIs, 1, 'Slice', 'Perimeter');
+    goods = (props(:,1)==nindx);
+
+    img = load_data(fimg, nindx);
+    p = data(goods);
+
+    figure;imshow(img); hold on;
+    for i=1:length(p)
+      plot(p{i}(:,1), p{i}(:,2))
+    end
+    keyboard
+  end
+    
   % Intermediate variables used to store all the data extracted from the segmentations
   all_fish = {};
   all_exper = {};
@@ -182,28 +331,31 @@ function study_fin_regeneration
   bowti = strncmp(all_exper, '4', 1) & (all_types==0);
   dblet = strncmp(all_exper, '5', 1);
   qdlet = strncmp(all_exper, '6', 1);
-  regen = (all_types==0 & ~whole & ~bowti);
+  treat = strncmp(all_exper, '7', 1);
+  regen = (all_types==0 & ~whole & ~bowti & ~treat);
   thinn = (all_types==3 & ~dblet & ~qdlet);
   slimm = ((all_types==5 | all_types==6) & ~dblet & ~qdlet);
-  valids = (whole | bowti | regen | thinn | slimm);
+  valids = (whole | bowti | regen | thinn | slimm | treat);
 
   % Get the number of elements in each group
   nwhole = sum(whole);
   nregen = sum(regen);
   nbowti = sum(bowti);
+  ntreat = sum(treat);
   nthinn = sum(thinn);
   nslimm = sum(slimm);
   ndblet = sum(dblet);
   nqdlet = sum(qdlet);
 
   % Prepare the index vector
-  indx = [ones(nwhole, 1); ones(nregen, 1)*2; ones(nbowti, 1)*3; ones(nthinn, 1)*4; ones(nslimm, 1)*5; ones(ndblet, 1)*6; ones(nqdlet, 1)*7];
-  full_indx = [ones(2*nouter*nwhole, 1); ones(2*nouter*nregen, 1)*2; ones(2*nouter*nbowti, 1)*3; ones(2*nouter*nthinn, 1)*4; ones(2*nouter*nslimm, 1)*5; ones(2*nouter*ndblet, 1)*6; ones(2*nouter*nqdlet, 1)*7];
+  indx = [ones(nwhole, 1); ones(nregen, 1)*2; ones(nbowti, 1)*3; ones(ntreat, 1)*4; ones(nthinn, 1)*5; ones(nslimm, 1)*6; ones(ndblet, 1)*7; ones(nqdlet, 1)*8];
+  full_indx = [ones(2*nouter*nwhole, 1); ones(2*nouter*nregen, 1)*2; ones(2*nouter*nbowti, 1)*3; ones(2*nouter*ntreat, 1)*4; ones(2*nouter*nthinn, 1)*5; ones(2*nouter*nslimm, 1)*6; ones(2*nouter*ndblet, 1)*7; ones(2*nouter*nqdlet, 1)*8];
 
   % Split the data per experiment type
   whole_fin = all_fins(whole,:);
   regen_fin = all_fins(regen,:);
   bowti_fin = all_fins(bowti,:);
+  treat_fin = all_fins(treat,:);
   thinn_fin = all_fins(thinn,:);
   slimm_fin = all_fins(slimm,:);
   dblet_fin = all_fins(dblet,:);
@@ -212,6 +364,7 @@ function study_fin_regeneration
   whole_wid = all_wids(whole,:);
   regen_wid = all_wids(regen,:);
   bowti_wid = all_wids(bowti,:);
+  treat_wid = all_wids(treat,:);
   thinn_wid = all_wids(thinn,:);
   slimm_wid = all_wids(slimm,:);
   dblet_wid = all_wids(dblet,:);
@@ -220,6 +373,7 @@ function study_fin_regeneration
   whole_len = all_lens(whole,:);
   regen_len = all_lens(regen,:);
   bowti_len = all_lens(bowti,:);
+  treat_len = all_lens(treat,:);
   thinn_len = all_lens(thinn,:);
   slimm_len = all_lens(slimm,:);
   dblet_len = all_lens(dblet,:);
@@ -228,6 +382,7 @@ function study_fin_regeneration
   whole_bif = all_bifs(whole,:);
   regen_bif = all_bifs(regen,:);
   bowti_bif = all_bifs(bowti,:);
+  treat_bif = all_bifs(treat,:);
   thinn_bif = all_bifs(thinn,:);
   slimm_bif = all_bifs(slimm,:);
   dblet_bif = all_bifs(dblet,:);
@@ -248,6 +403,7 @@ function study_fin_regeneration
   whole_norm = whole_fin(:,2) ./ whole_fin(:,5);
   bowti_norm = bowti_fin(:,2) ./ bowti_fin(:,5);
   regen_norm = regen_fin(:,2) ./ regen_fin(:,5);
+  treat_norm = treat_fin(:,2) ./ treat_fin(:,5);
   thinn_norm = thinn_fin(:,2) ./ thinn_fin(:,5);
   slimm_norm = slimm_fin(:,2) ./ slimm_fin(:,5);
   qdlet_norm = qdlet_fin(:,2) ./ qdlet_fin(:,5);
@@ -256,6 +412,7 @@ function study_fin_regeneration
   whole_rel = whole_norm ./ avg_lengths(1);
   bowti_rel = bowti_norm ./ avg_lengths(1);
   regen_rel = regen_norm ./ avg_lengths(1);
+  treat_rel = treat_norm ./ avg_lengths(1);
   thinn_rel = thinn_norm ./ avg_lengths(4);
   slimm_rel = slimm_norm ./ avg_lengths(6);
   qdlet_rel = qdlet_norm ./ avg_lengths(1);
@@ -267,13 +424,15 @@ function study_fin_regeneration
   %boxplot({whole_norm, regen_norm, bowti_norm, thinn_norm, slimm_norm});
   %title('Fin length / peduncle width (a.u.)')
   %subplot(1,2,2);
-  boxplot({whole_rel, regen_rel, bowti_rel, thinn_rel, slimm_rel, qdlet_rel, dblet_rel});
+  %boxplot({whole_rel, regen_rel, bowti_rel, treat_rel, thinn_rel, slimm_rel, qdlet_rel, dblet_rel});
+  [mval,sval] = mymean([whole_rel; regen_rel; bowti_rel; treat_rel; thinn_rel; slimm_rel; qdlet_rel; dblet_rel], 1, indx);
+  errorbar([1:length(mval)], mval, sval)
   title('Relative Fin length / peduncle width (a.u.)')
   ylim([0.5 1.5])
 
   % And compute the significance
-  [H11,p11] = myttest([whole_norm; regen_norm; bowti_norm; thinn_norm; slimm_norm; qdlet_norm; dblet_norm], indx);
-  [H12,p12] = myttest([whole_rel; regen_rel; bowti_rel; thinn_rel; slimm_rel; qdlet_rel; dblet_rel], indx);
+  %[H11,p11] = myttest([whole_norm; regen_norm; bowti_norm; thinn_norm; slimm_norm; qdlet_norm; dblet_norm], indx);
+  [H12,p12] = myttest([whole_rel; regen_rel; bowti_rel; treat_rel; thinn_rel; slimm_rel; qdlet_rel; dblet_rel], indx);
 
   % Figure 2:
   % Next we look at the depth of the cleft
@@ -284,6 +443,7 @@ function study_fin_regeneration
   whole_cle = (whole_fin(:,2) - whole_fin(:,3)) ./ whole_fin(:,5);
   bowti_cle = (bowti_fin(:,2) - bowti_fin(:,3)) ./ bowti_fin(:,5);
   regen_cle = (regen_fin(:,2) - regen_fin(:,3)) ./ regen_fin(:,5);
+  treat_cle = (treat_fin(:,2) - treat_fin(:,3)) ./ treat_fin(:,5);
   thinn_cle = (thinn_fin(:,2) - thinn_fin(:,3)) ./ thinn_fin(:,5);
   slimm_cle = (slimm_fin(:,2) - slimm_fin(:,3)) ./ slimm_fin(:,5);
   qdlet_cle = (qdlet_fin(:,2) - qdlet_fin(:,3)) ./ qdlet_fin(:,5);
@@ -297,13 +457,15 @@ function study_fin_regeneration
   %subplot(1,2,2);
 
   subplot(2,2,2);
-  boxplot({whole_cle / avg_clefts(1), regen_cle / avg_clefts(1), bowti_cle / avg_clefts(1), thinn_cle / avg_clefts(4), slimm_cle / avg_clefts(6), qdlet_cle / avg_clefts(1), dblet_cle / avg_clefts(1)});
+  %boxplot({whole_cle / avg_clefts(1), regen_cle / avg_clefts(1), bowti_cle / avg_clefts(1), treat_cle / avg_clefts(1), thinn_cle / avg_clefts(4), slimm_cle / avg_clefts(6), qdlet_cle / avg_clefts(1), dblet_cle / avg_clefts(1)});
+  [mval,sval] = mymean([whole_cle / avg_clefts(1); regen_cle / avg_clefts(1); bowti_cle / avg_clefts(1); treat_cle / avg_clefts(1); thinn_cle / avg_clefts(4); slimm_cle / avg_clefts(6); qdlet_cle / avg_clefts(1); dblet_cle / avg_clefts(1)], 1, indx);
+  errorbar([1:length(mval)], mval, sval)
   title('Relative Cleft depth / peduncle width (a.u.)')
   ylim([0.0 1.5])
 
   % Stats
   %[H21,p21] = myttest([whole_cle; regen_cle; bowti_cle; thinn_cle; slimm_cle;qdlet_cle; dblet_cle], indx);
-  [H22,p22] = myttest([whole_cle / avg_clefts(1); regen_cle / avg_clefts(1); bowti_cle / avg_clefts(1); thinn_cle / avg_clefts(4); slimm_cle / avg_clefts(6); qdlet_cle / avg_clefts(1); dblet_cle / avg_clefts(1)], indx);
+  [H22,p22] = myttest([whole_cle / avg_clefts(1); regen_cle / avg_clefts(1); bowti_cle / avg_clefts(1); treat_cle / avg_clefts(1); thinn_cle / avg_clefts(4); slimm_cle / avg_clefts(6); qdlet_cle / avg_clefts(1); dblet_cle / avg_clefts(1)], indx);
 
   % Figure 3:
   % The width of the fin
@@ -313,6 +475,7 @@ function study_fin_regeneration
   whole_wid = nanmax(whole_wid, [], 2) ./ whole_fin(:,5);
   bowti_wid = nanmax(bowti_wid, [], 2) ./ bowti_fin(:,5);
   regen_wid = nanmax(regen_wid, [], 2) ./ regen_fin(:,5);
+  treat_wid = nanmax(treat_wid, [], 2) ./ treat_fin(:,5);
   thinn_wid = nanmax(thinn_wid, [], 2) ./ thinn_fin(:,5);
   slimm_wid = nanmax(slimm_wid, [], 2) ./ slimm_fin(:,5);
   qdlet_wid = nanmax(qdlet_wid, [], 2) ./ qdlet_fin(:,5);
@@ -326,13 +489,15 @@ function study_fin_regeneration
   %subplot(1,2,2);
 
   subplot(2,2,3);
-  boxplot({whole_wid / avg_widths(1), regen_wid / avg_widths(1), bowti_wid / avg_widths(1), thinn_wid / avg_widths(4), slimm_wid / avg_widths(6), qdlet_wid / avg_widths(1), dblet_wid / avg_widths(1)});
+  %boxplot({whole_wid / avg_widths(1), regen_wid / avg_widths(1), bowti_wid / avg_widths(1), treat_wid / avg_widths(1), thinn_wid / avg_widths(4), slimm_wid / avg_widths(6), qdlet_wid / avg_widths(1), dblet_wid / avg_widths(1)});
+  [mval,sval] = mymean([whole_wid / avg_widths(1); regen_wid / avg_widths(1); bowti_wid / avg_widths(1); treat_wid / avg_widths(1); thinn_wid / avg_widths(4); slimm_wid / avg_widths(6); qdlet_wid / avg_widths(1); dblet_wid / avg_widths(1)], 1, indx);
+  errorbar([1:length(mval)], mval, sval)
   title('Relative fin width / peduncle width (a.u.)')
   ylim([0.0 1.5])
 
   % Stats
   %[H31,p31] = myttest([whole_wid; regen_wid; bowti_wid; thinn_wid; slimm_wid; qdlet_wid; dblet_wid], indx);
-  [H32,p32] = myttest([whole_wid / avg_widths(1); regen_wid / avg_widths(1); bowti_wid / avg_widths(1); thinn_wid / avg_widths(4); slimm_wid / avg_widths(6); qdlet_wid / avg_widths(1); dblet_wid / avg_widths(1)], indx);
+  [H32,p32] = myttest([whole_wid / avg_widths(1); regen_wid / avg_widths(1); bowti_wid / avg_widths(1); treat_wid / avg_widths(1); thinn_wid / avg_widths(4); slimm_wid / avg_widths(6); qdlet_wid / avg_widths(1); dblet_wid / avg_widths(1)], indx);
 
   % Figure 4:
   % The bifurcation position
@@ -342,6 +507,7 @@ function study_fin_regeneration
   whole_norm = bsxfun(@rdivide, whole_bif, whole_fin(:,5));
   bowti_norm = bsxfun(@rdivide, bowti_bif, bowti_fin(:,5));
   regen_norm = bsxfun(@rdivide, regen_bif, regen_fin(:,5));
+  treat_norm = bsxfun(@rdivide, treat_bif, treat_fin(:,5));
   thinn_norm = bsxfun(@rdivide, thinn_bif, thinn_fin(:,5));
   slimm_norm = bsxfun(@rdivide, slimm_bif, slimm_fin(:,5));
   qdlet_norm = bsxfun(@rdivide, qdlet_bif, qdlet_fin(:,5));
@@ -350,6 +516,7 @@ function study_fin_regeneration
   whole_rel = bsxfun(@rdivide, whole_norm, avg_bifs);
   bowti_rel = bsxfun(@rdivide, bowti_norm, avg_bifs);
   regen_rel = bsxfun(@rdivide, regen_norm, avg_bifs);
+  treat_rel = bsxfun(@rdivide, treat_norm, avg_bifs);
   thinn_rel = bsxfun(@rdivide, thinn_norm, avg_bifs);
   slimm_rel = bsxfun(@rdivide, slimm_norm, avg_bifs);
   qdlet_rel = bsxfun(@rdivide, qdlet_norm, avg_bifs);
@@ -372,7 +539,7 @@ function study_fin_regeneration
 
   % Stats
   %[H41,p41] = myttest([whole_norm(:); regen_norm(:); bowti_norm(:); thinn_norm(:); slimm_norm(:); qdlet_norm(:); dblet_norm(:)], full_indx);
-  [H42,p42] = myttest([nanmean(whole_norm, 2); nanmean(regen_norm, 2); nanmean(bowti_norm, 2); nanmean(thinn_norm, 2); nanmean(slimm_norm, 2); nanmean(qdlet_norm, 2); nanmean(dblet_norm, 2)], indx);
+  %[H42,p42] = myttest([nanmean(whole_norm, 2); nanmean(regen_norm, 2); nanmean(bowti_norm, 2); nanmean(thinn_norm, 2); nanmean(slimm_norm, 2); nanmean(qdlet_norm, 2); nanmean(dblet_norm, 2)], indx);
   %[H43,p43] = myttest([whole_rel(:); regen_rel(:); bowti_rel(:); thinn_rel(:); slimm_rel(:); qdlet_rel(:); dblet_rel(:)], full_indx);
   %[H44,p44] = myttest([nanmean(whole_rel, 2); nanmean(regen_rel, 2); nanmean(bowti_rel, 2); nanmean(thinn_rel, 2); nanmean(slimm_rel, 2); nanmean(qdlet_rel, 2); nanmean(dblet_rel, 2)], indx);
 
@@ -384,6 +551,7 @@ function study_fin_regeneration
   whole_norm = whole_bif ./ whole_len;
   regen_norm = regen_bif ./ regen_len;
   bowti_norm = bowti_bif ./ bowti_len;
+  treat_norm = treat_bif ./ treat_len;
   thinn_norm = thinn_bif ./ thinn_len;
   slimm_norm = slimm_bif ./ slimm_len;
   qdlet_norm = qdlet_bif ./ qdlet_len;
@@ -392,6 +560,7 @@ function study_fin_regeneration
   whole_rel = bsxfun(@rdivide, whole_norm, avg_bifs);
   regen_rel = bsxfun(@rdivide, regen_norm, avg_bifs);
   bowti_rel = bsxfun(@rdivide, bowti_norm, avg_bifs);
+  treat_rel = bsxfun(@rdivide, treat_norm, avg_bifs);
   thinn_rel = bsxfun(@rdivide, thinn_norm, avg_bifs);
   slimm_rel = bsxfun(@rdivide, slimm_norm, avg_bifs);
   qdlet_rel = bsxfun(@rdivide, qdlet_norm, avg_bifs);
@@ -405,7 +574,9 @@ function study_fin_regeneration
   %subplot(2,2,2);
 
   subplot(2,2,4);
-  boxplot({nanmean(whole_norm, 2), nanmean(regen_norm, 2), nanmean(bowti_norm, 2), nanmean(thinn_norm, 2), nanmean(slimm_norm, 2), nanmean(qdlet_norm, 2), nanmean(dblet_norm, 2)});
+  %boxplot({nanmean(whole_norm, 2), nanmean(regen_norm, 2), nanmean(bowti_norm, 2), nanmean(treat_norm, 2), nanmean(thinn_norm, 2), nanmean(slimm_norm, 2), nanmean(qdlet_norm, 2), nanmean(dblet_norm, 2)});
+  [mval,sval] = mymean([nanmean(whole_norm, 2); nanmean(regen_norm, 2); nanmean(bowti_norm, 2); nanmean(treat_norm, 2); nanmean(thinn_norm, 2); nanmean(slimm_norm, 2); nanmean(qdlet_norm, 2); nanmean(dblet_norm, 2)], 1, indx);
+  errorbar([1:length(mval)], mval, sval)
   title('Average bifurcation position / peduncle width (a.u.)')
   ylim([0.5 1.1])
   %subplot(2,2,3);
@@ -417,13 +588,15 @@ function study_fin_regeneration
 
   % Stats
   %[H51,p51] = myttest([whole_norm(:); regen_norm(:); bowti_norm(:); thinn_norm(:); slimm_norm(:)], full_indx);
-  [H52,p52] = myttest([nanmean(whole_norm, 2); nanmean(regen_norm, 2); nanmean(bowti_norm, 2); nanmean(thinn_norm, 2); nanmean(slimm_norm, 2); nanmean(qdlet_norm, 2); nanmean(dblet_norm, 2)], indx);
+  [H52,p52] = myttest([nanmean(whole_norm, 2); nanmean(regen_norm, 2); nanmean(bowti_norm, 2); nanmean(treat_norm, 2); nanmean(thinn_norm, 2); nanmean(slimm_norm, 2); nanmean(qdlet_norm, 2); nanmean(dblet_norm, 2)], indx);
   %[H53,p53] = myttest([whole_rel(:); regen_rel(:); bowti_rel(:); thinn_rel(:); slimm_rel(:)], full_indx);
   %[H54,p54] = myttest([nanmean(whole_rel, 2); nanmean(regen_rel, 2); nanmean(bowti_rel, 2); nanmean(thinn_rel, 2); nanmean(slimm_rel, 2)], indx);
 
-  display([H12 NaN(7,1) H22 NaN(7,1) H32 NaN(7,1) H52])
-  display([p12 NaN(7,1) p22 NaN(7,1) p32 NaN(7,1) p52])
-  display([nwhole nregen nbowti nthinn nslimm nqdlet ndblet])
+  display([H12 NaN(8,1) H22 NaN(8,1) H32 NaN(8,1) H52])
+  display([p12 NaN(8,1) p22 NaN(8,1) p32 NaN(8,1) p52])
+  display([nwhole nregen nbowti ntreat nthinn nslimm nqdlet ndblet])
+
+  keyboard
 
   % Figure 6: Individual ray length
 
@@ -431,6 +604,7 @@ function study_fin_regeneration
   whole_norm = bsxfun(@rdivide, whole_len, whole_fin(:,5));
   regen_norm = bsxfun(@rdivide, regen_len, regen_fin(:,5));
   bowti_norm = bsxfun(@rdivide, bowti_len, bowti_fin(:,5));
+  treat_norm = bsxfun(@rdivide, treat_len, treat_fin(:,5));
   thinn_norm = bsxfun(@rdivide, thinn_len, thinn_fin(:,5));
   slimm_norm = bsxfun(@rdivide, slimm_len, slimm_fin(:,5));
   qdlet_norm = bsxfun(@rdivide, qdlet_len, qdlet_fin(:,5));
@@ -439,6 +613,7 @@ function study_fin_regeneration
   whole_mean = nanmean(whole_norm, 1);
   regen_mean = nanmean(regen_norm, 1);
   bowti_mean = nanmean(bowti_norm, 1);
+  treat_mean = nanmean(treat_norm, 1);
   thinn_mean = nanmean(thinn_norm, 1);
   slimm_mean = nanmean(slimm_norm, 1);
   qdlet_mean = nanmean(qdlet_norm, 1);
@@ -446,6 +621,7 @@ function study_fin_regeneration
   whole_std = nanstd(whole_norm, 1);
   regen_std = nanstd(regen_norm, 1);
   bowti_std = nanstd(bowti_norm, 1);
+  treat_std = nanstd(treat_norm, 1);
   thinn_std = nanstd(thinn_norm, 1);
   slimm_std = nanstd(slimm_norm, 1);
   qdlet_std = nanstd(qdlet_norm, 1);
@@ -455,19 +631,19 @@ function study_fin_regeneration
   figure;
   subplot(1,2,1);
   %plot(peduncle_indx, [whole_mean; regen_mean; bowti_mean; thinn_mean; slimm_mean]);
-  plot(repmat(peduncle_indx, 1, 3), [whole_mean whole_mean+whole_std whole_mean-whole_std; regen_mean regen_mean+regen_std regen_mean-regen_std; bowti_mean bowti_mean+bowti_std bowti_mean-bowti_std; thinn_mean thinn_mean+thinn_std thinn_mean-thinn_std; slimm_mean slimm_mean+slimm_std slimm_mean-slimm_std; qdlet_mean qdlet_mean+qdlet_std qdlet_mean-qdlet_std; dblet_mean dblet_mean+dblet_std dblet_mean-dblet_std]);
+  plot(repmat(peduncle_indx, 1, 3), [whole_mean whole_mean+whole_std whole_mean-whole_std; regen_mean regen_mean+regen_std regen_mean-regen_std; bowti_mean bowti_mean+bowti_std bowti_mean-bowti_std; treat_mean treat_mean+treat_std treat_mean-treat_std; thinn_mean thinn_mean+thinn_std thinn_mean-thinn_std; slimm_mean slimm_mean+slimm_std slimm_mean-slimm_std; qdlet_mean qdlet_mean+qdlet_std qdlet_mean-qdlet_std; dblet_mean dblet_mean+dblet_std dblet_mean-dblet_std]);
   %errorbar(repmat(peduncle_indx, 5, 1).', [whole_mean; regen_mean; bowti_mean; thinn_mean; slimm_mean].', [whole_std; regen_std; bowti_std; thinn_std; slimm_std].');
   %errorbar(peduncle_indx, whole_mean, whole_std);
   %axis('equal')
-  legend({'whole', 'flat', 'step', 'narrow', 'trimm', '4-let', '2-let'})
+  legend({'whole', 'flat', 'step', 'RA', 'narrow', 'trimm', '4-let', '2-let'})
 
   H61 = cell(1, 2*nouter);
   p61 = cell(1, 2*nouter);
-  H62 = NaN(7, 2*nouter);
-  p62 = NaN(7, 2*nouter);
+  H62 = NaN(8, 2*nouter);
+  p62 = NaN(8, 2*nouter);
   %part_indx = [ones(nwhole, 1); ones(nregen, 1)*2; ones(nbowti, 1)*3; ones(nthinn, 1)*4; ones(nslimm, 1)*5; ones(n)];
   for i=1:2*nouter
-    [H61{i},p61{i}] = myttest([whole_norm(:, i); regen_norm(:, i); bowti_norm(:, i); thinn_norm(:, i); slimm_norm(:, i); qdlet_norm(:, i); dblet_norm(:, i)], indx);
+    [H61{i},p61{i}] = myttest([whole_norm(:, i); regen_norm(:, i); bowti_norm(:, i); treat_norm(:, i); thinn_norm(:, i); slimm_norm(:, i); qdlet_norm(:, i); dblet_norm(:, i)], indx);
     H62(:,i) = H61{i}(1,:).';
     p62(:,i) = p61{i}(1,:).';
   end
@@ -475,17 +651,20 @@ function study_fin_regeneration
   whole_norm = [whole_norm(:,1:nouter); whole_norm(:, end:-1:end-nouter+1)];
   regen_norm = [regen_norm(:,1:nouter); regen_norm(:, end:-1:end-nouter+1)];
   bowti_norm = [bowti_norm(:,1:nouter); bowti_norm(:, end:-1:end-nouter+1)];
+  treat_norm = [treat_norm(:,1:nouter); treat_norm(:, end:-1:end-nouter+1)];
   thinn_norm = [thinn_norm(:,1:nouter); thinn_norm(:, end:-1:end-nouter+1)];
   slimm_norm = [slimm_norm(:,1:nouter); slimm_norm(:, end:-1:end-nouter+1)];
 
   whole_mean = nanmean(whole_norm, 1);
   regen_mean = nanmean(regen_norm, 1);
   bowti_mean = nanmean(bowti_norm, 1);
+  treat_mean = nanmean(treat_norm, 1);
   thinn_mean = nanmean(thinn_norm, 1);
   slimm_mean = nanmean(slimm_norm, 1);
   whole_std = nanstd(whole_norm, 1);
   regen_std = nanstd(regen_norm, 1);
   bowti_std = nanstd(bowti_norm, 1);
+  treat_std = nanstd(treat_norm, 1);
   thinn_std = nanstd(thinn_norm, 1);
   slimm_std = nanstd(slimm_norm, 1);
 
@@ -498,6 +677,7 @@ function study_fin_regeneration
   whole_norm = (whole_len - whole_bif < bif_thresh)+0;
   regen_norm = (regen_len - regen_bif < bif_thresh)+0;
   bowti_norm = (bowti_len - bowti_bif < bif_thresh)+0;
+  treat_norm = (treat_len - treat_bif < bif_thresh)+0;
   thinn_norm = (thinn_len - thinn_bif < bif_thresh)+0;
   slimm_norm = (slimm_len - slimm_bif < bif_thresh)+0;
   qdlet_norm = (qdlet_len - qdlet_bif < bif_thresh)+0;
@@ -508,6 +688,7 @@ function study_fin_regeneration
   whole_norm(isnan(whole_len) | isnan(whole_bif)) = NaN;
   regen_norm(isnan(regen_len) | isnan(regen_bif)) = NaN;
   bowti_norm(isnan(bowti_len) | isnan(bowti_bif)) = NaN;
+  treat_norm(isnan(treat_len) | isnan(treat_bif)) = NaN;
   thinn_norm(isnan(thinn_len) | isnan(thinn_bif)) = NaN;
   slimm_norm(isnan(slimm_len) | isnan(slimm_bif)) = NaN;
   qdlet_norm(isnan(qdlet_len) | isnan(qdlet_bif)) = NaN;
@@ -516,6 +697,7 @@ function study_fin_regeneration
   whole_mean = nanmean(whole_norm, 1);
   regen_mean = nanmean(regen_norm, 1);
   bowti_mean = nanmean(bowti_norm, 1);
+  treat_mean = nanmean(treat_norm, 1);
   thinn_mean = nanmean(thinn_norm, 1);
   slimm_mean = nanmean(slimm_norm, 1);
   qdlet_mean = nanmean(qdlet_norm, 1);
@@ -523,6 +705,7 @@ function study_fin_regeneration
   whole_std = nanstd(whole_norm, 1);
   regen_std = nanstd(regen_norm, 1);
   bowti_std = nanstd(bowti_norm, 1);
+  treat_std = nanstd(treat_norm, 1);
   thinn_std = nanstd(thinn_norm, 1);
   slimm_std = nanstd(slimm_norm, 1);
   qdlet_std = nanstd(qdlet_norm, 1);
@@ -533,28 +716,67 @@ function study_fin_regeneration
   %subplot(1,2,1);
   subplot(1,2,2);
   %plot(peduncle_indx, [whole_mean; regen_mean; bowti_mean; thinn_mean; slimm_mean]);
-  plot(repmat(peduncle_indx, 1, 3), [whole_mean whole_mean+whole_std whole_mean-whole_std; regen_mean regen_mean+regen_std regen_mean-regen_std; bowti_mean bowti_mean+bowti_std bowti_mean-bowti_std; thinn_mean thinn_mean+thinn_std thinn_mean-thinn_std; slimm_mean slimm_mean+slimm_std slimm_mean-slimm_std; qdlet_mean qdlet_mean+qdlet_std qdlet_mean-qdlet_std; dblet_mean dblet_mean+dblet_std dblet_mean-dblet_std]);
+  plot(repmat(peduncle_indx, 1, 3), [whole_mean whole_mean+whole_std whole_mean-whole_std; regen_mean regen_mean+regen_std regen_mean-regen_std; bowti_mean bowti_mean+bowti_std bowti_mean-bowti_std; treat_mean treat_mean+treat_std treat_mean-treat_std; thinn_mean thinn_mean+thinn_std thinn_mean-thinn_std; slimm_mean slimm_mean+slimm_std slimm_mean-slimm_std; qdlet_mean qdlet_mean+qdlet_std qdlet_mean-qdlet_std; dblet_mean dblet_mean+dblet_std dblet_mean-dblet_std]);
   %errorbar(repmat(peduncle_indx, 5, 1).', [whole_mean; regen_mean; bowti_mean; thinn_mean; slimm_mean].', [whole_std; regen_std; bowti_std; thinn_std; slimm_std].');
   %errorbar(peduncle_indx, whole_mean, whole_std);
   %axis('equal')
-  legend({'whole', 'flat', 'step', 'narrow', 'trimm', 'qdlet', 'dblet'})
+  legend({'whole', 'flat', 'step', 'RA', 'narrow', 'trimm', 'qdlet', 'dblet'})
 
   H71 = cell(1, 2*nouter);
   p71 = cell(1, 2*nouter);
-  H72 = NaN(7, 2*nouter);
-  p72 = NaN(7, 2*nouter);
+  H72 = NaN(8, 2*nouter);
+  p72 = NaN(8, 2*nouter);
+  p73 = NaN(8, 2*nouter);
   %part_indx = [ones(nwhole, 1); ones(nregen, 1)*2; ones(nbowti, 1)*3; ones(nthinn, 1)*4; ones(nslimm, 1)*5; ones(nquad, 1)*6; ones(ndoubl, 1)*7];
   for i=1:2*nouter
-    [H71{i},p71{i}] = myttest([whole_norm(:, i); regen_norm(:, i); bowti_norm(:, i); thinn_norm(:, i); slimm_norm(:, i); qdlet_norm(:,i); dblet_norm(:,i)], indx);
+    [H71{i},p71{i}] = myttest([whole_norm(:, i); regen_norm(:, i); bowti_norm(:, i); treat_norm(:, i); thinn_norm(:, i); slimm_norm(:, i); qdlet_norm(:,i); dblet_norm(:,i)], indx);
     %H72(1:size(H71{i},1),i) = H71{i}(1,:).';
     %p72(1:size(p71{i},1),i) = p71{i}(1,:).';
     H72(:,i) = H71{i}(1,:).';
     p72(:,i) = p71{i}(1,:).';
   end
 
+  p73 = NaN(8, 2*nouter);
+  whole_counts = nansum(whole_norm, 1);
+  regen_counts = nansum(regen_norm, 1);
+  bowti_counts = nansum(bowti_norm, 1);
+  treat_counts = nansum(treat_norm, 1);
+  thinn_counts = nansum(thinn_norm, 1);
+  slimm_counts = nansum(slimm_norm, 1);
+  dblet_counts = nansum(dblet_norm, 1);
+  qdlet_counts = nansum(qdlet_norm, 1);
+
+  whole_sizes = nansum(~isnan(whole_norm), 1);
+  regen_sizes = nansum(~isnan(regen_norm), 1);
+  bowti_sizes = nansum(~isnan(bowti_norm), 1);
+  treat_sizes = nansum(~isnan(treat_norm), 1);
+  thinn_sizes = nansum(~isnan(thinn_norm), 1);
+  slimm_sizes = nansum(~isnan(slimm_norm), 1);
+  dblet_sizes = nansum(~isnan(dblet_norm), 1);
+  qdlet_sizes = nansum(~isnan(qdlet_norm), 1);
+
+  pkg load nan
+  all_counts = cat(1, whole_counts, regen_counts, bowti_counts, treat_counts, thinn_counts, slimm_counts, dblet_counts, qdlet_counts);
+  all_sizes =  cat(1, whole_sizes, regen_sizes, bowti_sizes, treat_sizes, thinn_sizes, slimm_sizes, dblet_sizes, qdlet_sizes);
+
+  for i=1:2*nouter
+    for j=1:size(all_sizes, 1)
+      p73(j,i) = fishers_exact_test(all_counts(j,i), all_sizes(j,i) - all_counts(j,i), all_counts(2,i), all_sizes(2,i) - all_counts(2,i));
+      if all_sizes(j,i)==0
+        p73(j,i) = NaN;
+      end
+    end
+  end
+  H73 = (p73 < 0.05) + (p73 < 0.01) + (p73 < 0.001);
+  H73(isnan(p73)) = NaN;
+
+  pkg unload nan
+  keyboard
+
   whole_norm = [whole_norm(:,1:nouter); whole_norm(:, end:-1:end-nouter+1)];
   regen_norm = [regen_norm(:,1:nouter); regen_norm(:, end:-1:end-nouter+1)];
   bowti_norm = [bowti_norm(:,1:nouter); bowti_norm(:, end:-1:end-nouter+1)];
+  treat_norm = [treat_norm(:,1:nouter); treat_norm(:, end:-1:end-nouter+1)];
   thinn_norm = [thinn_norm(:,1:nouter); thinn_norm(:, end:-1:end-nouter+1)];
   slimm_norm = [slimm_norm(:,1:nouter); slimm_norm(:, end:-1:end-nouter+1)];
   qdlet_norm = [qdlet_norm(:,1:nouter); qdlet_norm(:, end:-1:end-nouter+1)];
@@ -563,6 +785,7 @@ function study_fin_regeneration
   whole_mean = nanmean(whole_norm, 1);
   regen_mean = nanmean(regen_norm, 1);
   bowti_mean = nanmean(bowti_norm, 1);
+  treat_mean = nanmean(treat_norm, 1);
   thinn_mean = nanmean(thinn_norm, 1);
   slimm_mean = nanmean(slimm_norm, 1);
   qdlet_mean = nanmean(qdlet_norm, 1);
@@ -570,6 +793,7 @@ function study_fin_regeneration
   whole_std = nanstd(whole_norm, 1);
   regen_std = nanstd(regen_norm, 1);
   bowti_std = nanstd(bowti_norm, 1);
+  treat_std = nanstd(treat_norm, 1);
   thinn_std = nanstd(thinn_norm, 1);
   slimm_std = nanstd(slimm_norm, 1);
   qdlet_std = nanstd(qdlet_norm, 1);
