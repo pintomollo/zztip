@@ -6,7 +6,7 @@
 % 09/06/2020
 function study_fin_regeneration
 
-  tensions = '/home/blanchou/Documents/Manuscripts/Fin_regen/criterion/stress_tension_tip.csv';
+  tensions = '/home/blanchou/Documents/Manuscripts/Fin_regen/criterion/stress_tension_tip_3.csv';
   T = csvread(tensions);
 
   c1 = reshape(T(end-8,:), 11, []);
@@ -14,12 +14,78 @@ function study_fin_regeneration
   c3 = reshape(T(end-2,:), 11, []);
   c4 = reshape(T(end,:), 11, []);
 
-  figure;
-  subplot(2,2,1);bar(c1(:,1:3))
-  subplot(2,2,2);bar(c2(:,3:4))
-  subplot(2,2,3);bar(c3(:,2:4))
-  subplot(2,2,4);bar(c4(:,3:4))
+  c3b = reshape(T(end-3,:), 11, []);
+  c4b = reshape(T(end-1,:), 11, []);
+  c5 = c3b - c4b;
 
+  e = T([1:2 24:25], :);
+  l = T([3:10 16:23], :);
+  c = T([11:15], :);
+
+  %figure;
+  %subplot(2,2,1);scatter(abs(mean(T(1:25,:))), T(end-9,:));
+  %subplot(2,2,2);scatter(abs(mean(l))-abs(mean(c)), T(end-7,:));
+  %subplot(2,2,3);scatter(abs(mean([l;c])), T(end-3,:));
+  %subplot(2,2,4);scatter(abs(mean([l;c]))-abs(mean(e)), T(end-1,:));
+
+  mc = abs(mean([l; c]));
+  dc = abs(mean([l; c])) - abs(mean(e));
+  dl = (abs(mean(l)) - abs(mean(e)))/2;
+  dc = (abs(mean(l)) - abs(mean(c)))/2;
+  me = abs(mean(e));
+  c1b = reshape(abs(mean([l;c;e])), 11, []);
+  c1b = c1b ./ c1b(:, [1 1 1 1]);
+  c2b = reshape(dc, 11, []);
+  c2b = c2b ./ c2b(:, [2 2 2 2]);
+  c3b = reshape(mc, 11, []);
+  c3b = c3b ./ c3b(:, [3 3 3 3]);
+  c4b = reshape(dc, 11, []);
+  c4b = c4b ./ c4b(:, [2 2 2 2]);
+  c4c = reshape(dl, 11, []);
+  c4c = c4c ./ c4c(:, [2 2 2 2]);
+  c4d = reshape(dl, 11, []);
+  c4d = c4d ./ c4d(:, [1 1 1 1]);
+
+  %figure;
+  %subplot(2,2,1);scatter(c3b(:), T(end-2,:));
+  %subplot(2,2,2);scatter(c4b(:), T(end,:));
+
+  %keyboard
+
+  %figure;
+  %subplot(2,2,1);bar(c1(:,1:3))
+  %subplot(2,2,2);bar(c2b(:,3:4))
+  %subplot(2,2,3);bar(c3(:,2:4))
+  %subplot(2,2,4);bar(c4c(:,2:4))
+
+  %figure;
+  %subplot(3,2,1);bar(c4b(:,1:4))
+  %subplot(3,2,2);bar(c4b(:,3:4))
+  %subplot(3,2,3);bar(c4c(:,1:4))
+  %subplot(3,2,4);bar(c4c(:,3:4))
+  %subplot(3,2,5);bar(c4d(:,1:4))
+  %subplot(3,2,6);bar(c4d(:,3:4))
+
+  figure;
+  subplot(2,2,1);bar(c1(:,1:3));ylim([0 2])
+  subplot(2,2,2);bar(c2(:,3:4));ylim([-5 5])
+  subplot(2,2,3);bar(c3(:,2:4));ylim([0 2])
+  subplot(2,2,4);bar(c4(:,3:4));ylim([-5 5])
+
+  figure;
+  subplot(2,2,1);bar(c1b(:,1:3));ylim([0 2])
+  subplot(2,2,3);bar(c2(:,3:4));ylim([-5 5])
+  subplot(2,2,2);bar(c3(:,3:4));ylim([0 2])
+  subplot(2,2,4);bar(c4d(:,2:4));ylim([-2 2])
+
+  figure;
+  subplot(2,2,1);bar(c1b(:,1:3));
+  subplot(2,2,3);bar(c2(:,3:4));
+  subplot(2,2,2);bar(c3(:,3:4));
+  %subplot(2,2,3);bar(c4c(:,2:4));
+  subplot(2,2,4);bar(c4d(:,2:4));
+
+  %{
   figure;
   subplot(2,2,1);bar(c1(:,[1 3])-1)
   subplot(2,2,2);bar(c2(:,3:4))
@@ -31,10 +97,9 @@ function study_fin_regeneration
   subplot(2,2,2);bar(c2(:,3:4));ylim([-5 5]);
   subplot(2,2,3);bar(c3(:,[2 4])-c3(:,[3 3]));ylim([-1 1])
   subplot(2,2,4);bar(c4(:,3:4));ylim([-5 5])
+  %}
 
-  keyboard
-  return;
-
+  %{
   C = [-1.5 -1.0 -1.0 -1.0 -1.0 0; ...
 	-0.5 0.0 0.0 0.0 -0.5 1; ...
  	1.0 0.5 2.0 1.5 1.5 1; ...
@@ -130,9 +195,7 @@ function study_fin_regeneration
   subplot(2,2,4);
   bar(S3.*(R(:,4)-R(:,3)));
   title('Distalisation in narrower fins')
-
-
-  keyboard
+  %}
 
   % Absolute path to the used segmentation files
   files = {'/home/blanchou/Documents/Manuscripts/Fin_regen/revisions/Regen/SB01', ...
